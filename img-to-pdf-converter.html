@@ -766,7 +766,7 @@
             function processFiles(files) {
                 const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
                 const maxSize = 10 * 1024 * 1024; // 10MB
-                const maxFiles = 20;
+                const maxFiles = 25; // Increased from 20 to 25 as requested
                 
                 if (images.length + files.length > maxFiles) {
                     showToast(`You can upload maximum ${maxFiles} images`, 'error');
@@ -957,12 +957,15 @@
                             } else if (image.file.type === 'image/png') {
                                 img = await pdfDoc.embedPng(image.dataUrl);
                             } else if (image.file.type === 'image/webp') {
-                                // PDF-lib doesn't support WEBP directly, so we convert to PNG via canvas
-                                img = await convertWebpToPng(image.dataUrl);
-                                img = await pdfDoc.embedPng(img);
+                                // Convert WEBP to PNG via canvas
+                                const pngDataUrl = await convertWebpToPng(image.dataUrl);
+                                img = await pdfDoc.embedPng(pngDataUrl);
+                            } else {
+                                continue; // Skip unsupported types
                             }
                         } catch (error) {
                             console.error('Error embedding image:', error);
+                            showToast(`Error processing ${image.file.name}`, 'error');
                             continue;
                         }
                         
@@ -991,7 +994,7 @@
                             }
                         }
                         
-                        // Add page and draw image
+                        // Add page
                         const page = pdfDoc.addPage([pageWidth, pageHeight]);
                         
                         // Calculate scaling to fit image on page
@@ -1006,17 +1009,18 @@
                             );
                             width = img.width * scale;
                             height = img.height * scale;
-                            
-                            // Center the image on the page
-                            const x = (pageWidth - width) / 2;
-                            const y = (pageHeight - height) / 2;
-                            page.drawImage(img, {
-                                x,
-                                y,
-                                width,
-                                height,
-                            });
                         }
+                        
+                        // Center the image on the page
+                        const x = (pageWidth - width) / 2;
+                        const y = (pageHeight - height) / 2;
+                        
+                        page.drawImage(img, {
+                            x,
+                            y,
+                            width,
+                            height,
+                        });
                     }
                     
                     // Save and download
@@ -1071,39 +1075,6 @@
                 themeToggle.textContent = newTheme === 'dark' ? '🌞' : '🌒';
                 currentTheme = newTheme;
             }
-
-            // Initialize AdSense (placeholder - replace with your actual AdSense code)
-            function initAdSense() {
-                // This is a placeholder for AdSense initialization
-                // Replace with your actual AdSense code
-                const adScript = document.createElement('script');
-                adScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID';
-                adScript.async = true;
-                adScript.crossOrigin = 'anonymous';
-                document.head.appendChild(adScript);
-                
-                // Placeholder ad units
-                const adUnits = ['ad-unit-top', 'ad-unit-middle', 'ad-unit-bottom'];
-                adUnits.forEach(id => {
-                    const adEl = document.getElementById(id);
-                    if (adEl) {
-                        adEl.innerHTML = `
-                            <ins class="adsbygoogle"
-                                style="display:block"
-                                data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
-                                data-ad-slot="YOUR_AD_SLOT_ID"
-                                data-ad-format="auto"
-                                data-full-width-responsive="true"></ins>
-                            <script>
-                                (adsbygoogle = window.adsbygoogle || []).push({});
-                            </script>
-                        `;
-                    }
-                });
-            }
-
-            // Uncomment to enable AdSense initialization
-            // initAdSense();
         });
     </script>
 </body>
