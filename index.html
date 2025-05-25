@@ -1,75 +1,800 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>All-in-One PDF Tools</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Free online tool to convert multiple images to PDF. No registration required. Supports JPG, PNG, WEBP formats with drag-and-drop reordering.">
+    <meta name="keywords" content="image to pdf, jpg to pdf, png to pdf, webp to pdf, convert images to pdf, free pdf converter">
+    <title>ImageToPDF - Convert Images to PDF Online | Free Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
+    <style>
+        :root {
+            /* Sky & Slate Color Theme */
+            --primary: #3B82F6;
+            --primary-dark: #60A5FA;
+            --accent: #FBBF24;
+            --accent-dark: #FACC15;
+            --bg-light: #F9FAFB;
+            --bg-dark: #111827;
+            --surface-light: #FFFFFF;
+            --surface-dark: #1F2937;
+            --text-light: #1F2937;
+            --text-dark: #F3F4F6;
+            --border-light: #E5E7EB;
+            --border-dark: #374151;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+            --error-light: #EF4444;
+            --error-dark: #F87171;
+            --success-light: #10B981;
+            --success-dark: #34D399;
+        }
+
+        [data-theme="dark"] {
+            --primary: var(--primary-dark);
+            --accent: var(--accent-dark);
+            --bg-color: var(--bg-dark);
+            --surface: var(--surface-dark);
+            --text-color: var(--text-dark);
+            --border-color: var(--border-dark);
+            --shadow-color: var(--shadow-dark);
+            --error-color: var(--error-dark);
+            --success-color: var(--success-dark);
+            --text-muted: #9CA3AF;
+        }
+
+        [data-theme="light"] {
+            --primary: #3B82F6;
+            --accent: #FBBF24;
+            --bg-color: var(--bg-light);
+            --surface: var(--surface-light);
+            --text-color: var(--text-light);
+            --border-color: var(--border-light);
+            --shadow-color: var(--shadow-light);
+            --error-color: var(--error-light);
+            --success-color: var(--success-light);
+            --text-muted: #6B7280;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header & Navigation */
+        header {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            letter-spacing: -0.025em;
+            color: var(--text-color);
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-illustration {
+            max-width: 400px;
+            margin: 40px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero-illustration svg {
+            width: 100%;
+            height: auto;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: #2563EB;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* Features Section */
+        .section {
+            padding: 60px 0;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 40px;
+            text-align: center;
+            color: var(--text-color);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background-color: var(--surface);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px var(--shadow-color);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-color);
+        }
+
+        .feature-text {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* How It Works Section */
+        .steps-container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .steps-line {
+            position: absolute;
+            top: 40px;
+            left: 50px;
+            right: 50px;
+            height: 2px;
+            background-color: var(--border-color);
+            z-index: 1;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-card {
+            background-color: var(--surface);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin: 0 auto 20px;
+        }
+
+        .step-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-color);
+        }
+
+        .step-text {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* Testimonials */
+        .testimonials {
+            background-color: var(--surface);
+            border-radius: 12px;
+            padding: 40px;
+            margin: 60px 0;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .testimonial-card {
+            padding: 20px;
+            border-radius: 8px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        .testimonial-author {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .trust-badges {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 40px;
+        }
+
+        .badge {
+            background-color: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Ad Units */
+        .ad-container {
+            width: 100%;
+            margin: 40px 0;
+            padding: 20px;
+            background-color: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            text-align: center;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .ad-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--surface);
+            padding: 40px 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+        }
+
+        .footer-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .social-link {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+
+        .social-link:hover {
+            color: var(--primary);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .steps-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .steps-line {
+                display: none;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero {
+                padding: 60px 0;
+            }
+
+            .section {
+                padding: 40px 0;
+            }
+
+            .feature-card, .step-card {
+                padding: 20px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .delay-100 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-200 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-300 {
+            animation-delay: 0.3s;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
-  
-  <!-- Dark Mode Toggle -->
-  <div class="flex justify-end p-4">
-    <button onclick="document.documentElement.classList.toggle('dark')" class="text-sm bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-xl shadow-md">
-      Toggle Dark Mode
-    </button>
-  </div>
+<body>
+    <header>
+        <div class="container nav-container">
+            <a href="#" class="logo">
+                <span class="logo-icon">📄</span>
+                <span>ImageToPDF</span>
+            </a>
+            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌓</button>
+        </div>
+    </header>
 
-  <!-- Hero Section -->
-  <section class="text-center py-16 px-4 bg-white dark:bg-gray-800">
-    <h1 class="text-4xl font-semibold mb-4">Your All-in-One PDF Tool Suite – Free & Easy</h1>
-    <p class="text-lg mb-6">
-      Access multiple tools like 
-      <a href="tools/img-to-pdf-converter.html" target="_blank" class="text-blue-600 dark:text-blue-400 underline hover:text-blue-800">image to PDF</a>, 
-      compress PDF, and more from one place!
-    </p>
-    
-    <!-- Tool Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mt-10 px-4">
-      <a href="tools/img-to-pdf-converter.html" target="_blank" class="bg-blue-100 dark:bg-blue-800 p-6 rounded-xl shadow-md hover:shadow-lg transition">
-        <h2 class="text-xl font-semibold mb-2">🖼️ Image to PDF</h2>
-        <p>Convert images to a single PDF file quickly.</p>
-      </a>
-      <a href="tools/compress-pdf.html" target="_blank" class="bg-green-100 dark:bg-green-800 p-6 rounded-xl shadow-md hover:shadow-lg transition">
-        <h2 class="text-xl font-semibold mb-2">📉 Compress PDF</h2>
-        <p>Reduce PDF file size without losing quality.</p>
-      </a>
-      <a href="tools/pdf-to-word.html" target="_blank" class="bg-yellow-100 dark:bg-yellow-700 p-6 rounded-xl shadow-md hover:shadow-lg transition">
-        <h2 class="text-xl font-semibold mb-2">📄 PDF to Word</h2>
-        <p>Convert your PDFs into editable Word files.</p>
-      </a>
-      <a href="tools/merge-pdf.html" target="_blank" class="bg-purple-100 dark:bg-purple-800 p-6 rounded-xl shadow-md hover:shadow-lg transition">
-        <h2 class="text-xl font-semibold mb-2">🔗 Merge PDFs</h2>
-        <p>Combine multiple PDFs into one seamless file.</p>
-      </a>
-      <a href="tools/split-pdf.html" target="_blank" class="bg-pink-100 dark:bg-pink-800 p-6 rounded-xl shadow-md hover:shadow-lg transition">
-        <h2 class="text-xl font-semibold mb-2">✂️ Split PDF</h2>
-        <p>Extract individual pages from a PDF.</p>
-      </a>
-      <a href="tools/protect-pdf.html" target="_blank" class="bg-red-100 dark:bg-red-800 p-6 rounded-xl shadow-md hover:shadow-lg transition">
-        <h2 class="text-xl font-semibold mb-2">🔒 Protect PDF</h2>
-        <p>Encrypt and password-protect your PDF files.</p>
-      </a>
-    </div>
-  </section>
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container hero-content">
+                <h1 class="hero-title animate-fade-in">Convert Your Images to PDF Instantly – Free & Easy</h1>
+                <p class="hero-subtitle animate-fade-in delay-100">Drag & drop your images, arrange them as you like, and download a single PDF – all in one click!</p>
+                <a href="#converter" class="btn btn-primary animate-fade-in delay-200 pulse">Upload Images</a>
+                
+                <div class="hero-illustration animate-fade-in delay-300">
+                    <svg viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="50" y="50" width="300" height="200" rx="10" fill="var(--surface)" stroke="var(--border-color)" stroke-width="2"/>
+                        <rect x="80" y="80" width="100" height="70" rx="5" fill="var(--primary)" opacity="0.2" stroke="var(--primary)" stroke-width="2"/>
+                        <rect x="200" y="80" width="100" height="70" rx="5" fill="var(--success-color)" opacity="0.2" stroke="var(--success-color)" stroke-width="2"/>
+                        <path d="M80 180L320 180" stroke="var(--border-color)" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M80 200L320 200" stroke="var(--border-color)" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M80 220L320 220" stroke="var(--border-color)" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M80 240L280 240" stroke="var(--border-color)" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M300 160L320 180L300 200" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <text x="90" y="110" font-family="Inter" font-size="14" fill="var(--text-color)">IMG_001.jpg</text>
+                        <text x="210" y="110" font-family="Inter" font-size="14" fill="var(--text-color)">IMG_002.png</text>
+                        <text x="90" y="270" font-family="Inter" font-size="16" font-weight="bold" fill="var(--text-color)">output.pdf</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
 
-  <!-- Footer -->
-  <footer class="bg-white dark:bg-gray-900 py-6 text-center text-sm text-gray-500 dark:text-gray-400 mt-10">
-    <nav class="mb-2">
-      <a href="#" class="mx-2 hover:underline">Home</a>
-      <a href="#" class="mx-2 hover:underline">About</a>
-      <a href="#" class="mx-2 hover:underline">Privacy Policy</a>
-      <a href="#" class="mx-2 hover:underline">Contact</a>
-    </nav>
-    <p>&copy; 2025 PDFTool Suite. All rights reserved.</p>
-  </footer>
+        <!-- Ad Unit -->
+        <div class="container">
+            <div class="ad-container">
+                <div>
+                    <div class="ad-label">Advertisement</div>
+                    <div id="ad-unit-top">AdSense Ad Unit</div>
+                </div>
+            </div>
+        </div>
 
+        <!-- Features Section -->
+        <section class="section">
+            <div class="container">
+                <h2 class="section-title">Why Choose Our Image to PDF Converter?</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">✅</div>
+                        <h3 class="feature-title">Multiple Image Upload</h3>
+                        <p class="feature-text">Upload JPG, PNG, or WEBP images in bulk and combine them into one PDF document.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📄</div>
+                        <h3 class="feature-title">High-Quality Output</h3>
+                        <p class="feature-text">Preserve image quality with our optimized PDF conversion algorithm.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔁</div>
+                        <h3 class="feature-title">Drag & Drop Reordering</h3>
+                        <p class="feature-text">Easily arrange your images in the perfect order before conversion.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📥</div>
+                        <h3 class="feature-title">Instant Download</h3>
+                        <p class="feature-text">Get your PDF file immediately after processing, no waiting required.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section class="section" style="background-color: var(--bg-color);">
+            <div class="container">
+                <h2 class="section-title">How It Works</h2>
+                <div class="steps-container">
+                    <div class="steps-line"></div>
+                    <div class="steps-grid">
+                        <div class="step-card">
+                            <div class="step-number">1</div>
+                            <h3 class="step-title">Upload Images</h3>
+                            <p class="step-text">Select your images or drag & drop them into the upload area.</p>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">2</div>
+                            <h3 class="step-title">Arrange & Preview</h3>
+                            <p class="step-text">Drag to reorder images and preview the final sequence.</p>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">3</div>
+                            <h3 class="step-title">Download PDF</h3>
+                            <p class="step-text">Click convert and get your PDF file instantly.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials & Trust -->
+        <div class="container">
+            <div class="testimonials">
+                <h3 class="section-title" style="margin-bottom: 30px;">Trusted by Thousands</h3>
+                <div class="testimonial-grid">
+                    <div class="testimonial-card">
+                        <p class="testimonial-text">"This tool saved me hours of work! Converting product images to PDF catalogs has never been easier."</p>
+                        <p class="testimonial-author">— Sarah K., Small Business Owner</p>
+                    </div>
+                    <div class="testimonial-card">
+                        <p class="testimonial-text">"I use this weekly for my school projects. Simple, fast, and no watermarks!"</p>
+                        <p class="testimonial-author">— Michael T., Student</p>
+                    </div>
+                    <div class="testimonial-card">
+                        <p class="testimonial-text">"The best free image to PDF converter I've found. The drag-and-drop reordering is a game-changer."</p>
+                        <p class="testimonial-author">— David L., Photographer</p>
+                    </div>
+                </div>
+                <div class="trust-badges">
+                    <div class="badge">🔒 No Registration Needed</div>
+                    <div class="badge">💯 Free Forever</div>
+                    <div class="badge">⚡ Fast Processing</div>
+                    <div class="badge">🛡️ Secure & Private</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Converter Tool Section -->
+        <section id="converter" class="section">
+            <div class="container">
+                <h2 class="section-title">Ready to Convert Your Images?</h2>
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <a href="tools/img-to-pdf-converter.html"  class="btn btn-primary">Start Converting Now</a>
+                </div>
+                <!-- The actual converter tool would be inserted here -->
+                <div style="background-color: var(--surface); border-radius: 12px; padding: 40px; text-align: center; border: 1px solid var(--border-color);">
+                    <h3 style="margin-bottom: 20px; font-size: 1.5rem;">Image to PDF Converter</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 30px;">Upload your images to begin the conversion process</p>
+                    <div style="border: 2px dashed var(--border-color); border-radius: 10px; padding: 40px; cursor: pointer; transition: all 0.3s; margin-bottom: 20px;">
+                        <div style="font-size: 3rem; margin-bottom: 15px; color: var(--primary);">📁</div>
+                        <div style="font-weight: 500; margin-bottom: 10px;">Click to browse or drag & drop images</div>
+                        <div style="color: var(--text-muted); font-size: 0.9rem;">Supports JPG, PNG, WEBP (Max 10MB per file)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ad Unit -->
+        <div class="container">
+            <div class="ad-container">
+                <div>
+                    <div class="ad-label">Advertisement</div>
+                    <div id="ad-unit-bottom">AdSense Ad Unit</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <div class="footer-logo">
+                        <span>📄</span>
+                        <span>ImageToPDF</span>
+                    </div>
+                    <p style="color: var(--text-muted); margin-top: 10px;">The easiest way to convert images to PDF online. Free, fast, and no registration required.</p>
+                </div>
+                <div>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--text-color);">Quick Links</h4>
+                    <div class="footer-links">
+                        <a href="#" class="footer-link">Home</a>
+                        <a href="#" class="footer-link">About</a>
+                        <a href="#" class="footer-link">Privacy Policy</a>
+                        <a href="#" class="footer-link">Contact</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--text-color);">Resources</h4>
+                    <div class="footer-links">
+                        <a href="#" class="footer-link">Help Center</a>
+                        <a href="#" class="footer-link">FAQ</a>
+                        <a href="#" class="footer-link">Terms of Service</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div>© 2023 ImageToPDF. All rights reserved.</div>
+                <div class="social-links">
+                    <a href="#" class="social-link">Twitter</a>
+                    <a href="#" class="social-link">GitHub</a>
+                    <a href="#" class="social-link">ProductHunt</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Theme Toggle
+            const themeToggle = document.getElementById('theme-toggle');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            let currentTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
+            
+            function setTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+                themeToggle.textContent = theme === 'dark' ? '🌞' : '🌒';
+                currentTheme = theme;
+            }
+            
+            setTheme(currentTheme);
+            
+            themeToggle.addEventListener('click', () => {
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                setTheme(newTheme);
+            });
+            
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+            
+            // Initialize AdSense (placeholder)
+            function initAdSense() {
+                const adScript = document.createElement('script');
+                adScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID';
+                adScript.async = true;
+                adScript.crossOrigin = 'anonymous';
+                document.head.appendChild(adScript);
+                
+                ['ad-unit-top', 'ad-unit-bottom'].forEach(id => {
+                    const adEl = document.getElementById(id);
+                    if (adEl) {
+                        adEl.innerHTML = `
+                            <ins class="adsbygoogle"
+                                style="display:block"
+                                data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+                                data-ad-slot="YOUR_AD_SLOT_ID"
+                                data-ad-format="auto"
+                                data-full-width-responsive="true"></ins>
+                            <script>
+                                (adsbygoogle = window.adsbygoogle || []).push({});
+                            </script>
+                        `;
+                    }
+                });
+            }
+            
+            // Uncomment to enable AdSense
+            // initAdSense();
+        });
+    </script>
 </body>
 </html>
-
