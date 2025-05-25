@@ -104,6 +104,22 @@
             font-size: 1.8rem;
         }
 
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-link {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
         .theme-toggle {
             background: none;
             border: none;
@@ -479,6 +495,10 @@
             .section-title {
                 font-size: 1.8rem;
             }
+
+            .nav-links {
+                display: none;
+            }
         }
 
         @media (max-width: 480px) {
@@ -539,6 +559,11 @@
                 <span class="logo-icon">📄</span>
                 <span>ImageToPDF</span>
             </a>
+            <div class="nav-links">
+                <a href="img-to-pdf-converter.html" class="nav-link">Converter Tool</a>
+                <a href="#" class="nav-link">Features</a>
+                <a href="#" class="nav-link">About</a>
+            </div>
             <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌓</button>
         </div>
     </header>
@@ -549,7 +574,7 @@
             <div class="container hero-content">
                 <h1 class="hero-title animate-fade-in">Convert Your Images to PDF Instantly – Free & Easy</h1>
                 <p class="hero-subtitle animate-fade-in delay-100">Drag & drop your images, arrange them as you like, and download a single PDF – all in one click!</p>
-                <a href="#converter" class="btn btn-primary animate-fade-in delay-200 pulse">Upload Images</a>
+                <a href="img-to-pdf-converter.html" class="btn btn-primary animate-fade-in delay-200 pulse">Upload Images</a>
                 
                 <div class="hero-illustration animate-fade-in delay-300">
                     <svg viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -667,7 +692,7 @@
             <div class="container">
                 <h2 class="section-title">Ready to Convert Your Images?</h2>
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <a href="tools/img-to-pdf-converter.html"  class="btn btn-primary">Start Converting Now</a>
+                    <a href="img-to-pdf-converter.html" class="btn btn-primary">Start Converting Now</a>
                 </div>
                 <!-- The actual converter tool would be inserted here -->
                 <div style="background-color: var(--surface); border-radius: 12px; padding: 40px; text-align: center; border: 1px solid var(--border-color);">
@@ -707,7 +732,7 @@
                     <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--text-color);">Quick Links</h4>
                     <div class="footer-links">
                         <a href="#" class="footer-link">Home</a>
-                        <a href="#" class="footer-link">About</a>
+                        <a href="img-to-pdf-converter.html" class="footer-link">Converter Tool</a>
                         <a href="#" class="footer-link">Privacy Policy</a>
                         <a href="#" class="footer-link">Contact</a>
                     </div>
