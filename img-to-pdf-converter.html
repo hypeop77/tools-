@@ -1,504 +1,1125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="Free online tool to convert multiple images to a single PDF document. Supports JPG, PNG, WEBP formats with drag-and-drop reordering." />
-<meta name="keywords" content="image to pdf, jpg to pdf, png to pdf, webp to pdf, convert images to pdf, free pdf converter" />
-<title>ImageToPDF - Convert Images to PDF Online</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Free online tool to convert multiple images to a single PDF document. Supports JPG, PNG, WEBP formats with drag-and-drop reordering.">
+    <meta name="keywords" content="image to pdf, jpg to pdf, png to pdf, webp to pdf, convert images to pdf, free pdf converter">
+    <title>ImageToPDF - Convert Images to PDF Online</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.16.0/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Sky & Slate Color Theme */
+            --primary: #3B82F6;
+            --primary-dark: #60A5FA;
+            --accent: #FBBF24;
+            --accent-dark: #FACC15;
+            --bg-light: #F9FAFB;
+            --bg-dark: #111827;
+            --surface-light: #FFFFFF;
+            --surface-dark: #1F2937;
+            --text-light: #1F2937;
+            --text-dark: #F3F4F6;
+            --border-light: #E5E7EB;
+            --border-dark: #374151;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+            --error-light: #EF4444;
+            --error-dark: #F87171;
+            --success-light: #10B981;
+            --success-dark: #34D399;
+        }
 
-<!-- Include AdSense script only once in head -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-5117734305838946" crossorigin="anonymous"></script>
+        [data-theme="dark"] {
+            --primary: var(--primary-dark);
+            --accent: var(--accent-dark);
+            --bg-color: var(--bg-dark);
+            --surface: var(--surface-dark);
+            --text-color: var(--text-dark);
+            --border-color: var(--border-dark);
+            --shadow-color: var(--shadow-dark);
+            --error-color: var(--error-dark);
+            --success-color: var(--success-dark);
+            --text-muted: #9CA3AF;
+        }
 
-<!-- External libraries -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.16.0/pdf-lib.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        [data-theme="light"] {
+            --primary: #3B82F6;
+            --accent: #FBBF24;
+            --bg-color: var(--bg-light);
+            --surface: var(--surface-light);
+            --text-color: var(--text-light);
+            --border-color: var(--border-light);
+            --shadow-color: var(--shadow-light);
+            --error-color: var(--error-light);
+            --success-color: var(--success-light);
+            --text-muted: #6B7280;
+        }
 
-<!-- Your CSS styles -->
-<style>
-/* Your CSS code remains the same, omitted here for brevity. Please copy all your CSS from your code above. */
-:root {
-  /* Sky & Slate Color Theme */
-  --primary: #3B82F6;
-  --primary-dark: #60A5FA;
-  --accent: #FBBF24;
-  --accent-dark: #FACC15;
-  --bg-light: #F9FAFB;
-  --bg-dark: #111827;
-  --surface-light: #FFFFFF;
-  --surface-dark: #1F2937;
-  --text-light: #1F2937;
-  --text-dark: #F3F4F6;
-  --border-light: #E5E7EB;
-  --border-dark: #374151;
-  --shadow-light: rgba(0, 0, 0, 0.1);
-  --shadow-dark: rgba(0, 0, 0, 0.3);
-  --error-light: #EF4444;
-  --error-dark: #F87171;
-  --success-light: #10B981;
-  --success-dark: #34D399;
-}
-[data-theme="dark"] { /* dark theme variables */ }
-[data-theme="light"] { /* light theme variables */ }
-/* ... Rest of your CSS code ... */
-* { margin: 0; padding: 0; box-sizing: border-box; transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
-body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; color: var(--text-color); background-color: var(--bg-color); padding: 20px; min-height: 100vh; }
-/* Continue with your CSS as provided... */
-.container { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
-h1 { color: var(--primary); margin-bottom: 10px; font-size: 2.2rem; font-weight: 700; letter-spacing: -0.025em; }
-.subtitle { color: var(--text-muted); font-size: 1.1rem; max-width: 700px; margin: 0 auto; font-weight: 400; }
-.theme-toggle { position: absolute; top: 20px; right: 20px; background: none; border: none; cursor: pointer; font-size: 1.5rem; color: var(--text-color); padding: 8px; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
-.theme-toggle:hover { background-color: rgba(0, 0, 0, 0.05); }
-[data-theme="dark"] .theme-toggle:hover { background-color: rgba(255, 255, 255, 0.05); }
-.ad-container { width: 100%; margin: 20px 0; padding: 15px; background-color: var(--surface); border-radius: 12px; box-shadow: 0 4px 6px var(--shadow-color); text-align: center; min-height: 90px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color); }
-.ad-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
-/* ... rest of your CSS ... */
-</style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+            font-weight: 400;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .ad-container {
+            width: 100%;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            text-align: center;
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .ad-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tool-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .upload-section {
+            background-color: var(--surface);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+
+        .upload-area.active {
+            border-color: var(--primary);
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            margin-bottom: 10px;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .upload-hint {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563EB;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--success-light);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        [data-theme="dark"] .btn-outline:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .preview-section {
+            background-color: var(--surface);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .section-title .badge {
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 15px;
+        }
+
+        .image-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            aspect-ratio: 1;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .image-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: var(--surface);
+        }
+
+        .image-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .image-item:hover .image-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
+        }
+
+        .action-btn:hover {
+            background-color: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+        }
+
+        .image-index {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 20px;
+            padding: 2px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            grid-column: 1 / -1;
+        }
+
+        .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 1.1rem;
+        }
+
+        .pdf-settings {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        input[type="text"], select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--surface);
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.95rem;
+            min-width: 200px;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loading-content {
+            background-color: var(--surface);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-color);
+            max-width: 300px;
+            width: 90%;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--surface);
+            color: var(--text-color);
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            border-left: 4px solid var(--primary);
+            font-weight: 500;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        .toast.error {
+            border-left-color: var(--error-color);
+        }
+
+        .toast.success {
+            border-left-color: var(--success-color);
+        }
+
+        .toast-icon {
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .pdf-settings {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            input[type="text"], select {
+                min-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+
+            .theme-toggle {
+                top: 15px;
+                right: 15px;
+            }
+
+            .upload-section, .preview-section {
+                padding: 20px;
+            }
+
+            .upload-area {
+                padding: 25px 15px;
+            }
+
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 12px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-    <!-- Theme toggle button -->
-    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌓</button>
-    
-    <!-- Header -->
-    <header>
-        <h1>Image to PDF Converter</h1>
-        <p class="subtitle">Upload multiple images (JPG, PNG, WEBP) and convert them to a single PDF document with drag-and-drop reordering.</p>
-    </header>
-    
-    <!-- Top Ad Unit -->
-    <div class="ad-container">
-        <div>
-            <div class="ad-label">Advertisement</div>
-            <div id="ad-unit-top">
-                <!-- AdSense Ad -->
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-app-pub-5117734305838946"
-                     data-ad-slot="7204353933"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-            </div>
+    <div class="container">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌓</button>
+        
+        <header>
+            <h1>Image to PDF Converter</h1>
+            <p class="subtitle">Upload multiple images (JPG, PNG, WEBP) and convert them to a single PDF document with drag-and-drop reordering.</p>
+        </header>
+
+        <!-- Top Ad Unit -->
+<div class="ad-container">
+    <div>
+        <div class="ad-label">Advertisement</div>
+        <div id="ad-unit-top">
+            <!-- Replace with your AdSense code -->
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client="ca-app-pub-5117734305838946/2953756340"
+                crossorigin="anonymous"></script>
+            <!-- Your ad unit name -->
+            <ins class="adsbygoogle"
+                style="display:block"
+                data-ad-client="ca-app-pub-5117734305838946/2953756340"
+                data-ad-slot="YOUR_AD_SLOT_ID_TOP"
+                data-ad-format="auto"
+                data-full-width-responsive="true"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
         </div>
     </div>
-    
-    <!-- Main tool container -->
-    <div class="tool-container">
-        <!-- Upload section -->
-        <section class="upload-section">
-            <h2 class="section-title">
-                <span class="badge">1</span> Upload Images
-            </h2>
-            <div class="upload-area" id="upload-area">
-                <div class="upload-icon">📁</div>
-                <div class="upload-text">Click to browse or drag & drop images</div>
-                <div class="upload-hint">Supports JPG, PNG, WEBP (Max 10MB per file)</div>
-                <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" multiple>
-            </div>
-            <div class="controls">
-                <button class="btn btn-primary" id="add-files-btn">
-                    <span>📁</span> Add Images
-                </button>
-                <button class="btn btn-secondary" id="generate-pdf-btn" disabled>
-                    <span>📄</span> Generate PDF
-                </button>
-                <button class="btn btn-outline" id="clear-all-btn" disabled>
-                    <span>🗑️</span> Clear All
-                </button>
-            </div>
-        </section>
-        
-        <!-- Middle Ad Unit -->
-        <div class="ad-container">
-            <div>
-                <div class="ad-label">Advertisement</div>
-                <div id="ad-unit-middle">
-                    <ins class="adsbygoogle"
-                         style="display:block"
-                         data-ad-client="ca-app-pub-5117734305838946"
-                         data-ad-slot="7204353933"
-                         data-ad-format="auto"
-                         data-full-width-responsive="true"></ins>
+</div>
+
+        <div class="tool-container">
+            <section class="upload-section">
+                <h2 class="section-title">
+                    <span class="badge">1</span>
+                    Upload Images
+                </h2>
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Click to browse or drag & drop images</div>
+                    <div class="upload-hint">Supports JPG, PNG, WEBP (Max 10MB per file)</div>
+                    <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" multiple>
                 </div>
-            </div>
+                <div class="controls">
+                    <button class="btn btn-primary" id="add-files-btn">
+                        <span>📁</span>
+                        Add Images
+                    </button>
+                    <button class="btn btn-secondary" id="generate-pdf-btn" disabled>
+                        <span>📄</span>
+                        Generate PDF
+                    </button>
+                    <button class="btn btn-outline" id="clear-all-btn" disabled>
+                        <span>🗑️</span>
+                        Clear All
+                    </button>
+                </div>
+            </section>
+
+            <!-- Middle Ad Unit -->
+<div class="ad-container">
+    <div>
+        <div class="ad-label">Advertisement</div>
+        <div id="ad-unit-middle">
+            <!-- Replace with your AdSense code -->
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client="ca-app-pub-5117734305838946/2953756340"
+                crossorigin="anonymous"></script>
+            <!-- Your ad unit name -->
+            <ins class="adsbygoogle"
+                style="display:block"
+                data-ad-client="ca-app-pub-5117734305838946/2953756340"
+                data-ad-slot="YOUR_AD_SLOT_ID_MIDDLE"
+                data-ad-format="auto"
+                data-full-width-responsive="true"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
         </div>
-        
-        <!-- Preview & Settings -->
-        <section class="preview-section">
-            <h2 class="section-title">
-                <span class="badge">2</span> Image Preview & Order
-                <span id="image-count" style="font-size: 0.9rem; color: var(--text-muted); margin-left: auto;">0 images</span>
-            </h2>
-            <div class="pdf-settings">
-                <div class="setting-group">
-                    <label for="pdf-filename">PDF Filename</label>
-                    <input type="text" id="pdf-filename" placeholder="output.pdf" value="output.pdf" />
+    </div>
+</div>
+
+            <section class="preview-section">
+                <h2 class="section-title">
+                    <span class="badge">2</span>
+                    Image Preview & Order
+                    <span id="image-count" style="font-size: 0.9rem; color: var(--text-muted); margin-left: auto;">0 images</span>
+                </h2>
+                <div class="pdf-settings">
+                    <div class="setting-group">
+                        <label for="pdf-filename">PDF Filename</label>
+                        <input type="text" id="pdf-filename" placeholder="output.pdf" value="output.pdf">
+                    </div>
+                    <div class="setting-group">
+                        <label for="pdf-page-size">Page Size</label>
+                        <select id="pdf-page-size">
+                            <option value="A4">A4</option>
+                            <option value="Letter">Letter</option>
+                            <option value="A5">A5</option>
+                            <option value="A3">A3</option>
+                            <option value="match">Match Image Size</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label for="pdf-orientation">Orientation</label>
+                        <select id="pdf-orientation">
+                            <option value="portrait">Portrait</option>
+                            <option value="landscape">Landscape</option>
+                            <option value="auto">Auto (Match Image)</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="setting-group">
-                    <label for="pdf-page-size">Page Size</label>
-                    <select id="pdf-page-size">
-                        <option value="A4">A4</option>
-                        <option value="Letter">Letter</option>
-                        <option value="A5">A5</option>
-                        <option value="A3">A3</option>
-                        <option value="match">Match Image Size</option>
-                    </select>
+                <div class="image-grid" id="image-grid">
+                    <div class="empty-state">
+                        <div class="empty-icon">🖼️</div>
+                        <div class="empty-text">No images uploaded yet</div>
+                    </div>
                 </div>
-                <div class="setting-group">
-                    <label for="pdf-orientation">Orientation</label>
-                    <select id="pdf-orientation">
-                        <option value="portrait">Portrait</option>
-                        <option value="landscape">Landscape</option>
-                        <option value="auto">Auto (Match Image)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="image-grid" id="image-grid">
-                <div class="empty-state">
-                    <div class="empty-icon">🖼️</div>
-                    <div class="empty-text">No images uploaded yet</div>
-                </div>
-            </div>
-        </section>
-        
+            </section>
+        </div>
+
         <!-- Bottom Ad Unit -->
-        <div class="ad-container">
-            <div>
-                <div class="ad-label">Advertisement</div>
-                <div id="ad-unit-bottom">
-                    <ins class="adsbygoogle"
-                         style="display:block"
-                         data-ad-client="ca-app-pub-5117734305838946"
-                         data-ad-slot="7204353933"
-                         data-ad-format="auto"
-                         data-full-width-responsive="true"></ins>
-                </div>
-            </div>
+<div class="ad-container">
+    <div>
+        <div class="ad-label">Advertisement</div>
+        <div id="ad-unit-bottom">
+            <!-- Replace with your AdSense code -->
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client="ca-app-pub-5117734305838946/2953756340"
+                crossorigin="anonymous"></script>
+            <!-- Your ad unit name -->
+            <ins class="adsbygoogle"
+                style="display:block"
+                data-ad-client="ca-app-pub-5117734305838946/2953756340"
+                data-ad-slot="YOUR_AD_SLOT_ID_BOTTOM"
+                data-ad-format="auto"
+                data-full-width-responsive="true"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
         </div>
-    </div> <!-- End of tool-container -->
-    
-    <!-- Loading overlay -->
+    </div>
+</div>
+
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-content">
             <div class="loading-spinner"></div>
             <div class="loading-text">Generating PDF...</div>
         </div>
     </div>
-    
-    <!-- Toast notification -->
+
     <div class="toast" id="toast"></div>
-</div> <!-- End of container -->
 
-<!-- All scripts -->
-<script>
-  // Initialize ads after DOM loads
-  document.addEventListener('DOMContentLoaded', function() {
-    // Push ads to display
-    (adsbygoogle = window.adsbygoogle || []).push({});
-  });
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const fileInput = document.getElementById('file-input');
+            const uploadArea = document.getElementById('upload-area');
+            const addFilesBtn = document.getElementById('add-files-btn');
+            const generatePdfBtn = document.getElementById('generate-pdf-btn');
+            const clearAllBtn = document.getElementById('clear-all-btn');
+            const imageGrid = document.getElementById('image-grid');
+            const imageCount = document.getElementById('image-count');
+            const pdfFilename = document.getElementById('pdf-filename');
+            const pdfPageSize = document.getElementById('pdf-page-size');
+            const pdfOrientation = document.getElementById('pdf-orientation');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const toast = document.getElementById('toast');
+            const themeToggle = document.getElementById('theme-toggle');
 
-  // Your previous JavaScript code from your original file
-  // (Copy all your existing script code here, starting from 'document.addEventListener...')
-  document.addEventListener('DOMContentLoaded', function() {
-    // DOM Elements
-    const fileInput = document.getElementById('file-input');
-    const uploadArea = document.getElementById('upload-area');
-    const addFilesBtn = document.getElementById('add-files-btn');
-    const generatePdfBtn = document.getElementById('generate-pdf-btn');
-    const clearAllBtn = document.getElementById('clear-all-btn');
-    const imageGrid = document.getElementById('image-grid');
-    const imageCount = document.getElementById('image-count');
-    const pdfFilename = document.getElementById('pdf-filename');
-    const pdfPageSize = document.getElementById('pdf-page-size');
-    const pdfOrientation = document.getElementById('pdf-orientation');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const toast = document.getElementById('toast');
-    const themeToggle = document.getElementById('theme-toggle');
+            // State
+            let images = [];
+            let draggedItem = null;
 
-    // State
-    let images = [];
-    let draggedItem = null;
+            // Initialize theme based on user preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            let currentTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            themeToggle.textContent = currentTheme === 'dark' ? '🌞' : '🌒';
 
-    // Initialize theme based on user preference
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    let currentTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', currentTheme);
-    themeToggle.textContent = currentTheme === 'dark' ? '🌞' : '🌒';
+            // Event Listeners
+            uploadArea.addEventListener('click', () => fileInput.click());
+            addFilesBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            generatePdfBtn.addEventListener('click', generatePDF);
+            clearAllBtn.addEventListener('click', clearAllImages);
+            themeToggle.addEventListener('click', toggleTheme);
 
-    // Theme toggle
-    themeToggle.addEventListener('click', () => {
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      themeToggle.textContent = newTheme === 'dark' ? '🌞' : '🌒';
-      currentTheme = newTheme;
-    });
+            // Functions
+            function handleFileSelect(e) {
+                const files = e.target.files;
+                if (files.length > 0) {
+                    processFiles(files);
+                }
+                fileInput.value = ''; // Reset input to allow selecting same files again
+            }
 
-    // Upload handlers
-    uploadArea.addEventListener('click', () => fileInput.click());
-    document.getElementById('add-files-btn').addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', handleFileSelect);
-    uploadArea.addEventListener('dragover', handleDragOver);
-    uploadArea.addEventListener('dragleave', handleDragLeave);
-    uploadArea.addEventListener('drop', handleDrop);
-    document.getElementById('generate-pdf-btn').addEventListener('click', generatePDF);
-    document.getElementById('clear-all-btn').addEventListener('click', clearAllImages);
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('active');
+            }
 
-    // File select
-    function handleFileSelect(e) {
-      const files = e.target.files;
-      if (files.length > 0) processFiles(files);
-      e.target.value = '';
-    }
+            function handleDragLeave(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('active');
+            }
 
-    // Drag & drop
-    function handleDragOver(e) {
-      e.preventDefault(); e.stopPropagation();
-      uploadArea.classList.add('active');
-    }
-    function handleDragLeave(e) {
-      e.preventDefault(); e.stopPropagation();
-      uploadArea.classList.remove('active');
-    }
-    function handleDrop(e) {
-      e.preventDefault(); e.stopPropagation();
-      uploadArea.classList.remove('active');
-      processFiles(e.dataTransfer.files);
-    }
+            function handleDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('active');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    processFiles(files);
+                }
+            }
 
-    // Process files
-    function processFiles(files) {
-      const validTypes = ['image/jpeg','image/png','image/webp'];
-      const maxSize = 10 * 1024 * 1024;
-      const maxFiles = 25; // increase from 20 to 25
-      if (images.length + files.length > maxFiles) {
-        showToast(`Maximum ${maxFiles} images`, 'error');
-        return;
-      }
-      Array.from(files).forEach(file => {
-        if (!validTypes.includes(file.type)) {
-          showToast(`Skipped ${file.name}: Unsupported type`, 'error');
-          return;
-        }
-        if (file.size > maxSize) {
-          showToast(`Skipped ${file.name}: File too large`, 'error');
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = e => {
-          images.push({ id: Date.now() + Math.random(), file, dataUrl: e.target.result });
-          updateUI();
-        };
-        reader.readAsDataURL(file);
-      });
-    }
+            function processFiles(files) {
+                const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                const maxFiles = 25; // Increased from 20 to 25 as requested
+                
+                if (images.length + files.length > maxFiles) {
+                    showToast(`You can upload maximum ${maxFiles} images`, 'error');
+                    return;
+                }
 
-    // UI updates
-    function updateUI() {
-      if (images.length === 0) {
-        imageGrid.innerHTML = `<div class="empty-state"><div class="empty-icon">🖼️</div><div class="empty-text">No images uploaded yet</div></div>`;
-        document.getElementById('generate-pdf-btn').disabled = true;
-        document.getElementById('clear-all-btn').disabled = true;
-        imageCount.textContent = '0 images';
-        return;
-      }
-      document.getElementById('generate-pdf-btn').disabled = false;
-      document.getElementById('clear-all-btn').disabled = false;
-      imageCount.textContent = `${images.length} image${images.length !== 1 ? 's' : ''}`;
-      // Render images
-      imageGrid.innerHTML = '';
-      images.forEach((img, index) => {
-        const el = document.createElement('div');
-        el.className = 'image-item';
-        el.draggable = true;
-        el.dataset.id = img.id;
-        el.innerHTML = `
-          <img src="${img.dataUrl}" alt="${img.file.name}">
-          <div class="image-actions">
-            <button class="action-btn move-up-btn" title="Move up">⬆️</button>
-            <button class="action-btn move-down-btn" title="Move down">⬇️</button>
-            <button class="action-btn delete-btn" title="Delete">❌</button>
-          </div>
-          <div class="image-index">${index + 1}</div>
-        `;
-        imageGrid.appendChild(el);
-        // buttons
-        el.querySelector('.move-up-btn').addEventListener('click', () => moveImageUp(img.id));
-        el.querySelector('.move-down-btn').addEventListener('click', () => moveImageDown(img.id));
-        el.querySelector('.delete-btn').addEventListener('click', () => { deleteImage(img.id); });
-        // drag events
-        el.addEventListener('dragstart', handleDragStart);
-        el.addEventListener('dragover', handleDragOverItem);
-        el.addEventListener('dragleave', handleDragLeaveItem);
-        el.addEventListener('drop', handleDropItem);
-        el.addEventListener('dragend', handleDragEnd);
-      });
-    }
+                Array.from(files).forEach(file => {
+                    if (!validTypes.includes(file.type)) {
+                        showToast(`Skipped ${file.name}: Unsupported file type`, 'error');
+                        return;
+                    }
 
-    // Drag & drop
-    let draggedItem = null;
-    function handleDragStart(e) {
-      draggedItem = e.target;
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/html', e.target.innerHTML);
-      e.target.classList.add('dragging');
-    }
-    function handleDragOverItem(e) {
-      e.preventDefault();
-      const target = e.target.closest('.image-item');
-      if (target && target !== draggedItem) {
-        const rect = target.getBoundingClientRect();
-        const next = (e.clientY - rect.top) > (rect.bottom - rect.top) / 2;
-        imageGrid.insertBefore(draggedItem, next ? target.nextSibling : target);
-      }
-    }
-    function handleDragLeaveItem(e) { e.preventDefault(); }
-    function handleDropItem(e) { e.preventDefault(); }
-    function handleDragEnd(e) {
-      e.target.classList.remove('dragging');
-      // reorder images array
-      const newImages = [];
-      document.querySelectorAll('.image-item').forEach(item => {
-        const id = item.dataset.id;
-        const img = images.find(i => i.id === id);
-        if (img) newImages.push(img);
-      });
-      images = newImages;
-      updateUI();
-    }
+                    if (file.size > maxSize) {
+                        showToast(`Skipped ${file.name}: File too large (max 10MB)`, 'error');
+                        return;
+                    }
 
-    function moveImageUp(id) {
-      const index = images.findIndex(i => i.id === id);
-      if (index > 0) {
-        [images[index - 1], images[index]] = [images[index], images[index - 1]];
-        updateUI();
-      }
-    }
-    function moveImageDown(id) {
-      const index = images.findIndex(i => i.id === id);
-      if (index < images.length - 1) {
-        [images[index], images[index + 1]] = [images[index + 1], images[index]];
-        updateUI();
-      }
-    }
-    function deleteImage(id) {
-      images = images.filter(i => i.id !== id);
-      updateUI();
-    }
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        images.push({
+                            id: Date.now() + Math.random().toString(36).substr(2, 9),
+                            file: file,
+                            dataUrl: e.target.result
+                        });
+                        updateUI();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
 
-    // Generate PDF
-    async function generatePDF() {
-      if (images.length === 0) {
-        showToast('No images to convert', 'error');
-        return;
-      }
-      document.getElementById('loading-overlay').classList.add('active');
-      try {
-        const { PDFDocument, rgb } = PDFLib;
-        const pdfDoc = await PDFDocument.create();
-        const pageSize = pdfPageSize.value;
-        const orientation = pdfOrientation.value;
-        const filename = pdfFilename.value.endsWith('.pdf') ? pdfFilename.value : `${pdfFilename.value}.pdf`;
+            function updateUI() {
+                if (images.length === 0) {
+                    imageGrid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🖼️</div>
+                            <div class="empty-text">No images uploaded yet</div>
+                        </div>
+                    `;
+                    generatePdfBtn.disabled = true;
+                    clearAllBtn.disabled = true;
+                    imageCount.textContent = '0 images';
+                    return;
+                }
 
-        for (const image of images) {
-          let img;
-          try {
-            if (image.file.type === 'image/jpeg') {
-              img = await pdfDoc.embedJpg(image.dataUrl);
-            } else if (image.file.type === 'image/png') {
-              img = await pdfDoc.embedPng(image.dataUrl);
-            } else if (image.file.type === 'image/webp') {
-              const pngDataUrl = await convertWebpToPng(image.dataUrl);
-              img = await pdfDoc.embedPng(pngDataUrl);
-            } else continue;
-          } catch(e) {
-            console.error('Error embedding image', e);
-            showToast(`Error processing ${image.file.name}`, 'error');
-            continue;
-          }
+                generatePdfBtn.disabled = false;
+                clearAllBtn.disabled = false;
+                imageCount.textContent = `${images.length} image${images.length !== 1 ? 's' : ''}`;
 
-          let pageWidth, pageHeight;
-          if (pageSize === 'match') {
-            pageWidth = img.width;
-            pageHeight = img.height;
-          } else {
-            const sizes = {
-              'A4': [595.28, 841.89],
-              'Letter': [612, 792],
-              'A5': [420.94, 595.28],
-              'A3': [841.89, 1190.55]
-            };
-            [pageWidth, pageHeight] = sizes[pageSize];
-            if (orientation === 'landscape') [pageWidth, pageHeight] = [pageHeight, pageWidth];
-            if (orientation === 'auto' && img.width > img.height) [pageWidth, pageHeight] = [pageHeight, pageWidth];
-          }
+                imageGrid.innerHTML = '';
+                images.forEach((image, index) => {
+                    const imgElement = document.createElement('div');
+                    imgElement.className = 'image-item';
+                    imgElement.draggable = true;
+                    imgElement.dataset.id = image.id;
+                    imgElement.innerHTML = `
+                        <img src="${image.dataUrl}" alt="${image.file.name}">
+                        <div class="image-actions">
+                            <button class="action-btn move-up-btn" title="Move up">⬆️</button>
+                            <button class="action-btn move-down-btn" title="Move down">⬇️</button>
+                            <button class="action-btn delete-btn" title="Delete">❌</button>
+                        </div>
+                        <div class="image-index">${index + 1}</div>
+                    `;
+                    imageGrid.appendChild(imgElement);
 
-          const page = pdfDoc.addPage([pageWidth, pageHeight]);
-          let width, height;
-          if (pageSize === 'match') {
-            width = img.width;
-            height = img.height;
-          } else {
-            const scale = Math.min(pageWidth / img.width, pageHeight / img.height);
-            width = img.width * scale;
-            height = img.height * scale;
-          }
-          const x = (pageWidth - width) / 2;
-          const y = (pageHeight - height) / 2;
-          page.drawImage(img, { x, y, width, height });
-        }
-        const pdfBytes = await pdfDoc.save();
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        saveAs(blob, filename);
-        showToast('PDF generated successfully!', 'success');
-      } catch (e) {
-        console.error('Error generating PDF', e);
-        showToast('Error generating PDF. Please try again.', 'error');
-      } finally {
-        document.getElementById('loading-overlay').classList.remove('active');
-      }
-    }
+                    // Add event listeners for the buttons
+                    const moveUpBtn = imgElement.querySelector('.move-up-btn');
+                    const moveDownBtn = imgElement.querySelector('.move-down-btn');
+                    const deleteBtn = imgElement.querySelector('.delete-btn');
 
-    async function convertWebpToPng(dataUrl) {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL('image/png'));
-        };
-        img.src = dataUrl;
-      });
-    }
+                    moveUpBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        moveImageUp(image.id);
+                    });
 
-    function clearAllImages() {
-      images = [];
-      updateUI();
-      showToast('All images cleared', 'success');
-    }
+                    moveDownBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        moveImageDown(image.id);
+                    });
 
-    function showToast(message, type) {
-      toast.textContent = message;
-      toast.className = `toast ${type}`;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 3000);
-    }
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteImage(image.id);
+                    });
 
-    // Theme toggle
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme');
-      const newTheme = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      document.getElementById('theme-toggle').textContent = newTheme === 'dark' ? '🌞' : '🌒';
-    });
-  });
-</script>
+                    // Drag and drop events
+                    imgElement.addEventListener('dragstart', handleDragStart);
+                    imgElement.addEventListener('dragover', handleDragOverItem);
+                    imgElement.addEventListener('dragleave', handleDragLeaveItem);
+                    imgElement.addEventListener('drop', handleDropItem);
+                    imgElement.addEventListener('dragend', handleDragEnd);
+                });
+            }
+
+            function handleDragStart(e) {
+                draggedItem = e.target;
+                e.target.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', e.target.innerHTML);
+            }
+
+            function handleDragOverItem(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                const targetItem = e.target.closest('.image-item');
+                if (targetItem && targetItem !== draggedItem) {
+                    const rect = targetItem.getBoundingClientRect();
+                    const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                    
+                    imageGrid.insertBefore(
+                        draggedItem, 
+                        next ? targetItem.nextSibling : targetItem
+                    );
+                }
+            }
+
+            function handleDragLeaveItem(e) {
+                e.preventDefault();
+            }
+
+            function handleDropItem(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function handleDragEnd(e) {
+                e.preventDefault();
+                e.target.classList.remove('dragging');
+                
+                // Update the images array based on new order
+                const newImages = [];
+                const imageItems = imageGrid.querySelectorAll('.image-item');
+                imageItems.forEach(item => {
+                    const id = item.dataset.id;
+                    const image = images.find(img => img.id === id);
+                    if (image) newImages.push(image);
+                });
+                
+                images = newImages;
+                updateUI();
+            }
+
+            function moveImageUp(id) {
+                const index = images.findIndex(img => img.id === id);
+                if (index > 0) {
+                    [images[index - 1], images[index]] = [images[index], images[index - 1]];
+                    updateUI();
+                }
+            }
+
+            function moveImageDown(id) {
+                const index = images.findIndex(img => img.id === id);
+                if (index < images.length - 1) {
+                    [images[index], images[index + 1]] = [images[index + 1], images[index]];
+                    updateUI();
+                }
+            }
+
+            function deleteImage(id) {
+                images = images.filter(img => img.id !== id);
+                updateUI();
+            }
+
+            async function generatePDF() {
+                if (images.length === 0) {
+                    showToast('No images to convert', 'error');
+                    return;
+                }
+
+                loadingOverlay.classList.add('active');
+                
+                try {
+                    const { PDFDocument, rgb } = PDFLib;
+                    const pdfDoc = await PDFDocument.create();
+                    
+                    const pageSize = pdfPageSize.value;
+                    const orientation = pdfOrientation.value;
+                    const filename = pdfFilename.value.endsWith('.pdf') ? 
+                        pdfFilename.value : 
+                        `${pdfFilename.value}.pdf`;
+                    
+                    // Process each image
+                    for (const image of images) {
+                        let img;
+                        try {
+                            if (image.file.type === 'image/jpeg') {
+                                img = await pdfDoc.embedJpg(image.dataUrl);
+                            } else if (image.file.type === 'image/png') {
+                                img = await pdfDoc.embedPng(image.dataUrl);
+                            } else if (image.file.type === 'image/webp') {
+                                // Convert WEBP to PNG via canvas
+                                const pngDataUrl = await convertWebpToPng(image.dataUrl);
+                                img = await pdfDoc.embedPng(pngDataUrl);
+                            } else {
+                                continue; // Skip unsupported types
+                            }
+                        } catch (error) {
+                            console.error('Error embedding image:', error);
+                            showToast(`Error processing ${image.file.name}`, 'error');
+                            continue;
+                        }
+                        
+                        // Determine page size
+                        let pageWidth, pageHeight;
+                        
+                        if (pageSize === 'match') {
+                            pageWidth = img.width;
+                            pageHeight = img.height;
+                        } else {
+                            // Standard page sizes in points (1pt = 1/72 inch)
+                            const sizes = {
+                                'A4': [595.28, 841.89],
+                                'Letter': [612, 792],
+                                'A5': [420.94, 595.28],
+                                'A3': [841.89, 1190.55]
+                            };
+                            
+                            [pageWidth, pageHeight] = sizes[pageSize];
+                            
+                            // Handle orientation
+                            if (orientation === 'landscape') {
+                                [pageWidth, pageHeight] = [pageHeight, pageWidth];
+                            } else if (orientation === 'auto' && img.width > img.height) {
+                                [pageWidth, pageHeight] = [pageHeight, pageWidth];
+                            }
+                        }
+                        
+                        // Add page
+                        const page = pdfDoc.addPage([pageWidth, pageHeight]);
+                        
+                        // Calculate scaling to fit image on page
+                        let width, height;
+                        if (pageSize === 'match') {
+                            width = img.width;
+                            height = img.height;
+                        } else {
+                            const scale = Math.min(
+                                pageWidth / img.width,
+                                pageHeight / img.height
+                            );
+                            width = img.width * scale;
+                            height = img.height * scale;
+                        }
+                        
+                        // Center the image on the page
+                        const x = (pageWidth - width) / 2;
+                        const y = (pageHeight - height) / 2;
+                        
+                        page.drawImage(img, {
+                            x,
+                            y,
+                            width,
+                            height,
+                        });
+                    }
+                    
+                    // Save and download
+                    const pdfBytes = await pdfDoc.save();
+                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                    saveAs(blob, filename);
+                    
+                    showToast('PDF generated successfully!', 'success');
+                } catch (error) {
+                    console.error('Error generating PDF:', error);
+                    showToast('Error generating PDF. Please try again.', 'error');
+                } finally {
+                    loadingOverlay.classList.remove('active');
+                }
+            }
+
+            async function convertWebpToPng(dataUrl) {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.src = dataUrl;
+                });
+            }
+
+            function clearAllImages() {
+                images = [];
+                updateUI();
+                showToast('All images cleared', 'success');
+            }
+
+            function showToast(message, type) {
+                toast.textContent = message;
+                toast.className = `toast ${type}`;
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            function toggleTheme() {
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                themeToggle.textContent = newTheme === 'dark' ? '🌞' : '🌒';
+                currentTheme = newTheme;
+            }
+        });
+    </script>
 </body>
 </html>
