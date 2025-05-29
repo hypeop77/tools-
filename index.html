@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Free online tool to convert multiple images to PDF. No registration required. Supports JPG, PNG, WEBP formats with drag-and-drop reordering.">
-    <meta name="keywords" content="image to pdf, jpg to pdf, png to pdf, webp to pdf, convert images to pdf, free pdf converter">
-    <title>ImageToPDF - Convert Images to PDF Online | Free Tool</title>
+    <meta name="description" content="Free online tools to convert between different file formats. Convert images to PDF, Word to PDF, and more. No registration required.">
+    <meta name="keywords" content="pdf converter, image to pdf, word to pdf, excel to pdf, ppt to pdf, free pdf converter">
+    <title>Convertify PDF - Convert Files to PDF Online | Free Tools</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
     <style>
@@ -383,6 +383,68 @@
             gap: 8px;
         }
 
+        /* Conversion Tools Section */
+        .tools-section {
+            padding: 60px 0;
+            background-color: var(--surface);
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .tool-card {
+            background-color: var(--bg-color);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px var(--shadow-color);
+        }
+
+        .tool-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .tool-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-color);
+        }
+
+        .tool-text {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        .tool-btn {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+
+        .tool-btn:hover {
+            background-color: #2563EB;
+        }
+
         /* Ad Units */
         .ad-container {
             width: 100%;
@@ -514,7 +576,7 @@
                 padding: 40px 0;
             }
 
-            .feature-card, .step-card {
+            .feature-card, .step-card, .tool-card {
                 padding: 20px;
             }
         }
@@ -557,12 +619,12 @@
         <div class="container nav-container">
             <a href="#" class="logo">
                 <span class="logo-icon">📄</span>
-                <span>ImageToPDF</span>
+                <span>Convertify PDF</span>
             </a>
             <div class="nav-links">
-                <a href="img-to-pdf-converter.html" class="nav-link">Converter Tool</a>
-                <a href="#" class="nav-link">Features</a>
-                <a href="#" class="nav-link">About</a>
+                <a href="#converter-tools" class="nav-link">Tools</a>
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#how-it-works" class="nav-link">How It Works</a>
             </div>
             <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌓</button>
         </div>
@@ -572,9 +634,9 @@
         <!-- Hero Section -->
         <section class="hero">
             <div class="container hero-content">
-                <h1 class="hero-title animate-fade-in">Convert Your Images to PDF Instantly – Free & Easy</h1>
-                <p class="hero-subtitle animate-fade-in delay-100">Drag & drop your images, arrange them as you like, and download a single PDF – all in one click!</p>
-                <a href="img-to-pdf-converter.html" class="btn btn-primary animate-fade-in delay-200 pulse">Upload Images</a>
+                <h1 class="hero-title animate-fade-in">Convert Files to PDF Instantly – Free & Easy</h1>
+                <p class="hero-subtitle animate-fade-in delay-100">Transform your documents, images, and more into professional PDFs with our free online tools</p>
+                <a href="#converter-tools" class="btn btn-primary animate-fade-in delay-200 pulse">Start Converting Now</a>
                 
                 <div class="hero-illustration animate-fade-in delay-300">
                     <svg viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -605,24 +667,24 @@
         </div>
 
         <!-- Features Section -->
-        <section class="section">
+        <section id="features" class="section">
             <div class="container">
-                <h2 class="section-title">Why Choose Our Image to PDF Converter?</h2>
+                <h2 class="section-title">Why Choose Convertify PDF?</h2>
                 <div class="features-grid">
                     <div class="feature-card">
                         <div class="feature-icon">✅</div>
-                        <h3 class="feature-title">Multiple Image Upload</h3>
-                        <p class="feature-text">Upload JPG, PNG, or WEBP images in bulk and combine them into one PDF document.</p>
+                        <h3 class="feature-title">Multiple File Support</h3>
+                        <p class="feature-text">Convert various file types including images, Word, Excel, PowerPoint and more to PDF.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">📄</div>
                         <h3 class="feature-title">High-Quality Output</h3>
-                        <p class="feature-text">Preserve image quality with our optimized PDF conversion algorithm.</p>
+                        <p class="feature-text">Preserve original quality with our optimized PDF conversion technology.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">🔁</div>
-                        <h3 class="feature-title">Drag & Drop Reordering</h3>
-                        <p class="feature-text">Easily arrange your images in the perfect order before conversion.</p>
+                        <h3 class="feature-title">Easy to Use</h3>
+                        <p class="feature-text">Simple interface that makes conversion quick and effortless.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">📥</div>
@@ -634,7 +696,7 @@
         </section>
 
         <!-- How It Works Section -->
-        <section class="section" style="background-color: var(--bg-color);">
+        <section id="how-it-works" class="section" style="background-color: var(--bg-color);">
             <div class="container">
                 <h2 class="section-title">How It Works</h2>
                 <div class="steps-container">
@@ -642,19 +704,76 @@
                     <div class="steps-grid">
                         <div class="step-card">
                             <div class="step-number">1</div>
-                            <h3 class="step-title">Upload Images</h3>
-                            <p class="step-text">Select your images or drag & drop them into the upload area.</p>
+                            <h3 class="step-title">Select Tool</h3>
+                            <p class="step-text">Choose the conversion tool you need from our selection below.</p>
                         </div>
                         <div class="step-card">
                             <div class="step-number">2</div>
-                            <h3 class="step-title">Arrange & Preview</h3>
-                            <p class="step-text">Drag to reorder images and preview the final sequence.</p>
+                            <h3 class="step-title">Upload Files</h3>
+                            <p class="step-text">Select your files or drag & drop them into the upload area.</p>
                         </div>
                         <div class="step-card">
                             <div class="step-number">3</div>
                             <h3 class="step-title">Download PDF</h3>
                             <p class="step-text">Click convert and get your PDF file instantly.</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Converter Tools Section -->
+        <section id="converter-tools" class="tools-section">
+            <div class="container">
+                <h2 class="section-title">Our PDF Conversion Tools</h2>
+                <div class="tools-grid">
+                    <div class="tool-card">
+                        <div class="tool-icon">🖼️</div>
+                        <h3 class="tool-title">Image to PDF</h3>
+                        <p class="tool-text">Convert JPG, PNG, WEBP and other image formats to PDF documents.</p>
+                        <a href="img-to-pdf-converter.html" class="tool-btn">Convert Now</a>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-icon">📝</div>
+                        <h3 class="tool-title">Word to PDF</h3>
+                        <p class="tool-text">Convert DOC, DOCX files to PDF while preserving formatting.</p>
+                        <a href="#" class="tool-btn">Coming Soon</a>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-icon">📊</div>
+                        <h3 class="tool-title">Excel to PDF</h3>
+                        <p class="tool-text">Convert XLS, XLSX spreadsheets to PDF with proper layout.</p>
+                        <a href="#" class="tool-btn">Coming Soon</a>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-icon">📑</div>
+                        <h3 class="tool-title">PPT to PDF</h3>
+                        <p class="tool-text">Convert PowerPoint presentations to PDF documents.</p>
+                        <a href="#" class="tool-btn">Coming Soon</a>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-icon">📚</div>
+                        <h3 class="tool-title">HTML to PDF</h3>
+                        <p class="tool-text">Convert web pages or HTML files to PDF format.</p>
+                        <a href="#" class="tool-btn">Coming Soon</a>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-icon">✏️</div>
+                        <h3 class="tool-title">TXT to PDF</h3>
+                        <p class="tool-text">Convert plain text files to formatted PDF documents.</p>
+                        <a href="#" class="tool-btn">Coming Soon</a>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-icon">📧</div>
+                        <h3 class="tool-title">Email to PDF</h3>
+                        <p class="tool-text">Save emails as PDF files for archiving or sharing.</p>
+                        <a href="#" class="tool-btn">Coming Soon</a>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-icon">📂</div>
+                        <h3 class="tool-title">Merge PDF</h3>
+                        <p class="tool-text">Combine multiple PDF files into a single document.</p>
+                        <a href="#" class="tool-btn">Coming Soon</a>
                     </div>
                 </div>
             </div>
@@ -674,7 +793,7 @@
                         <p class="testimonial-author">— Michael T., Student</p>
                     </div>
                     <div class="testimonial-card">
-                        <p class="testimonial-text">"The best free image to PDF converter I've found. The drag-and-drop reordering is a game-changer."</p>
+                        <p class="testimonial-text">"The best free PDF converter I've found. The drag-and-drop reordering is a game-changer."</p>
                         <p class="testimonial-author">— David L., Photographer</p>
                     </div>
                 </div>
@@ -686,26 +805,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Converter Tool Section -->
-        <section id="converter" class="section">
-            <div class="container">
-                <h2 class="section-title">Ready to Convert Your Images?</h2>
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <a href="img-to-pdf-converter.html" class="btn btn-primary">Start Converting Now</a>
-                </div>
-                <!-- The actual converter tool would be inserted here -->
-                <div style="background-color: var(--surface); border-radius: 12px; padding: 40px; text-align: center; border: 1px solid var(--border-color);">
-                    <h3 style="margin-bottom: 20px; font-size: 1.5rem;">Image to PDF Converter</h3>
-                    <p style="color: var(--text-muted); margin-bottom: 30px;">Upload your images to begin the conversion process</p>
-                    <div style="border: 2px dashed var(--border-color); border-radius: 10px; padding: 40px; cursor: pointer; transition: all 0.3s; margin-bottom: 20px;">
-                        <div style="font-size: 3rem; margin-bottom: 15px; color: var(--primary);">📁</div>
-                        <div style="font-weight: 500; margin-bottom: 10px;">Click to browse or drag & drop images</div>
-                        <div style="color: var(--text-muted); font-size: 0.9rem;">Supports JPG, PNG, WEBP (Max 10MB per file)</div>
-                    </div>
-                </div>
-            </div>
-        </section>
 
         <!-- Ad Unit -->
         <div class="container">
@@ -724,15 +823,15 @@
                 <div>
                     <div class="footer-logo">
                         <span>📄</span>
-                        <span>ImageToPDF</span>
+                        <span>Convertify PDF</span>
                     </div>
-                    <p style="color: var(--text-muted); margin-top: 10px;">The easiest way to convert images to PDF online. Free, fast, and no registration required.</p>
+                    <p style="color: var(--text-muted); margin-top: 10px;">The easiest way to convert files to PDF online. Free, fast, and no registration required.</p>
                 </div>
                 <div>
                     <h4 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--text-color);">Quick Links</h4>
                     <div class="footer-links">
                         <a href="#" class="footer-link">Home</a>
-                        <a href="img-to-pdf-converter.html" class="footer-link">Converter Tool</a>
+                        <a href="#converter-tools" class="footer-link">Converter Tools</a>
                         <a href="#" class="footer-link">Privacy Policy</a>
                         <a href="#" class="footer-link">Contact</a>
                     </div>
@@ -747,7 +846,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <div>© 2023 ImageToPDF. All rights reserved.</div>
+                <div>© 2023 Convertify PDF. All rights reserved.</div>
                 <div class="social-links">
                     <a href="#" class="social-link">Twitter</a>
                     <a href="#" class="social-link">GitHub</a>
