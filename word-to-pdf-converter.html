@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+make this code work <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -712,333 +712,281 @@
     </div>
 
     <div class="toast" id="toast"></div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const { PDFDocument, rgb } = PDFLib; // Import rgb from PDFLib
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // DOM Elements
-            const fileInput = document.getElementById('file-input');
-            const uploadArea = document.getElementById('upload-area');
-            const addFilesBtn = document.getElementById('add-files-btn');
-            const generatePdfBtn = document.getElementById('generate-pdf-btn');
-            const clearAllBtn = document.getElementById('clear-all-btn');
-            const fileList = document.getElementById('file-list');
-            const fileCount = document.getElementById('file-count');
-            const pdfFilename = document.getElementById('pdf-filename');
-            const pdfPageSize = document.getElementById('pdf-page-size');
-            const pdfOrientation = document.getElementById('pdf-orientation');
-            const loadingOverlay = document.getElementById('loading-overlay');
-            const toast = document.getElementById('toast');
-            const themeToggle = document.getElementById('theme-toggle');
+    // DOM Elements
+    const fileInput = document.getElementById('file-input');
+    const uploadArea = document.getElementById('upload-area');
+    const addFilesBtn = document.getElementById('add-files-btn');
+    const generatePdfBtn = document.getElementById('generate-pdf-btn');
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    const fileList = document.getElementById('file-list');
+    const fileCount = document.getElementById('file-count');
+    const pdfFilename = document.getElementById('pdf-filename');
+    const pdfPageSize = document.getElementById('pdf-page-size');
+    const pdfOrientation = document.getElementById('pdf-orientation');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const toast = document.getElementById('toast');
+    const themeToggle = document.getElementById('theme-toggle');
 
-            // State
-            let files = [];
+    let files = [];
 
-            // Initialize theme based on user preference
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            let currentTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', currentTheme);
-            themeToggle.textContent = currentTheme === 'dark' ? '🌞' : '🌒';
+    // Theme setup (unchanged)
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let currentTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    themeToggle.textContent = currentTheme === 'dark' ? '🌞' : '🌒';
 
-            // Event Listeners
-            uploadArea.addEventListener('click', () => fileInput.click());
-            addFilesBtn.addEventListener('click', () => fileInput.click());
-            fileInput.addEventListener('change', handleFileSelect);
-            uploadArea.addEventListener('dragover', handleDragOver);
-            uploadArea.addEventListener('dragleave', handleDragLeave);
-            uploadArea.addEventListener('drop', handleDrop);
-            generatePdfBtn.addEventListener('click', convertToPDF);
-            clearAllBtn.addEventListener('click', clearAllFiles);
-            themeToggle.addEventListener('click', toggleTheme);
+    // Event Listeners (unchanged)
+    uploadArea.addEventListener('click', () => fileInput.click());
+    document.getElementById('add-files-btn').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileSelect);
+    uploadArea.addEventListener('dragover', handleDragOver);
+    uploadArea.addEventListener('dragleave', handleDragLeave);
+    uploadArea.addEventListener('drop', handleDrop);
+    document.getElementById('generate-pdf-btn').addEventListener('click', convertToPDF);
+    document.getElementById('clear-all-btn').addEventListener('click', clearAllFiles);
+    themeToggle.addEventListener('click', toggleTheme);
 
-            // Functions
-            function handleFileSelect(e) {
-                const selectedFiles = e.target.files;
-                if (selectedFiles.length > 0) {
-                    processFiles(selectedFiles);
-                }
-                fileInput.value = ''; // Reset input to allow selecting same files again
-            }
+    function handleFileSelect(e) {
+      const selectedFiles = e.target.files;
+      processFiles(selectedFiles);
+      fileInput.value = '';
+    }
 
-            function handleDragOver(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.classList.add('active');
-            }
+    function handleDragOver(e) {
+      e.preventDefault();
+      uploadArea.classList.add('active');
+    }
 
-            function handleDragLeave(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.classList.remove('active');
-            }
+    function handleDragLeave(e) {
+      e.preventDefault();
+      uploadArea.classList.remove('active');
+    }
 
-            function handleDrop(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.classList.remove('active');
-                
-                const droppedFiles = e.dataTransfer.files;
-                if (droppedFiles.length > 0) {
-                    processFiles(droppedFiles);
-                }
-            }
+    function handleDrop(e) {
+      e.preventDefault();
+      uploadArea.classList.remove('active');
+      processFiles(e.dataTransfer.files);
+    }
 
-            function processFiles(newFiles) {
-                const validTypes = [
-                    'application/msword',
-                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                ];
-                const validExtensions = ['doc', 'docx'];
-                const maxSize = 10 * 1024 * 1024; // 10MB
-                const maxFiles = 5; // Limit to 5 files for better performance
-                
-                if (files.length + newFiles.length > maxFiles) {
-                    showToast(`You can upload maximum ${maxFiles} files`, 'error');
-                    return;
-                }
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxFiles = 5;
 
-                Array.from(newFiles).forEach(file => {
-                    const fileExt = file.name.split('.').pop().toLowerCase();
-                    const isValidType = validTypes.includes(file.type) || 
-                                      validExtensions.includes(fileExt);
-                    
-                    if (!isValidType) {
-                        showToast(`Skipped ${file.name}: Unsupported file type`, 'error');
-                        return;
-                    }
+    function processFiles(newFiles) {
+      const validTypes = [
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      const validExtensions = ['doc', 'docx'];
 
-                    if (file.size > maxSize) {
-                        showToast(`Skipped ${file.name}: File too large (max 10MB)`, 'error');
-                        return;
-                    }
+      if (files.length + newFiles.length > maxFiles) {
+        showToast(`You can upload maximum ${maxFiles} files`, 'error');
+        return;
+      }
 
-                    files.push({
-                        id: Date.now() + Math.random().toString(36).substr(2, 9),
-                        file: file
-                    });
-                });
-                
-                updateUI();
-            }
+      Array.from(newFiles).forEach(file => {
+        const fileExt = file.name.split('.').pop().toLowerCase();
+        const isValidType = validTypes.includes(file.type) || validExtensions.includes(fileExt);
+        if (!isValidType) {
+          showToast(`Skipped ${file.name}: Unsupported file type`, 'error');
+          return;
+        }
+        if (file.size > maxSize) {
+          showToast(`Skipped ${file.name}: File too large (max 10MB)`, 'error');
+          return;
+        }
 
-            function updateUI() {
-                if (files.length === 0) {
-                    fileList.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-icon">📄</div>
-                            <div class="empty-text">No files uploaded yet</div>
-                        </div>
-                    `;
-                    generatePdfBtn.disabled = true;
-                    clearAllBtn.disabled = true;
-                    fileCount.textContent = '0 files';
-                    return;
-                }
+        files.push({ id: Date.now() + Math.random().toString(36).substr(2, 9), file });
+      });
+      updateUI();
+    }
 
-                generatePdfBtn.disabled = false;
-                clearAllBtn.disabled = false;
-                fileCount.textContent = `${files.length} file${files.length !== 1 ? 's' : ''}`;
+    function updateUI() {
+      if (files.length === 0) {
+        fileList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📄</div>
+            <div class="empty-text">No files uploaded yet</div>
+          </div>
+        `;
+        generatePdfBtn.disabled = true;
+        clearAllBtn.disabled = true;
+        fileCount.textContent = '0 files';
+        return;
+      }
 
-                fileList.innerHTML = '';
-                files.forEach((fileObj, index) => {
-                    const file = fileObj.file;
-                    const fileElement = document.createElement('div');
-                    fileElement.className = 'file-item';
-                    fileElement.dataset.id = fileObj.id;
-                    
-                    const fileSize = formatFileSize(file.size);
-                    
-                    fileElement.innerHTML = `
-                        <div class="file-icon">📄</div>
-                        <div class="file-info">
-                            <div class="file-name" title="${file.name}">${file.name}</div>
-                            <div class="file-size">${fileSize}</div>
-                        </div>
-                        <div class="file-actions">
-                            <button class="action-btn delete-btn" title="Delete">❌</button>
-                        </div>
-                    `;
-                    
-                    fileList.appendChild(fileElement);
-                    
-                    // Add event listener for delete button
-                    const deleteBtn = fileElement.querySelector('.delete-btn');
-                    deleteBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        deleteFile(fileObj.id);
-                    });
-                });
-            }
+      generatePdfBtn.disabled = false;
+      clearAllBtn.disabled = false;
+      fileCount.textContent = `${files.length} file${files.length !== 1 ? 's' : ''}`;
 
-            function formatFileSize(bytes) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
-            }
-
-            function deleteFile(id) {
-                files = files.filter(file => file.id !== id);
-                updateUI();
-                showToast('File removed', 'success');
-            }
-
-            async function convertToPDF() {
-                if (files.length === 0) {
-                    showToast('No files to convert', 'error');
-                    return;
-                }
-
-                loadingOverlay.classList.add('active');
-                
-                try {
-                    const { PDFDocument, rgb } = PDFLib;
-                    
-                    // Create a new PDF document
-                    const pdfDoc = await PDFDocument.create();
-                    
-                    const pageSize = pdfPageSize.value;
-                    const orientation = pdfOrientation.value;
-                    const filename = pdfFilename.value.endsWith('.pdf') ? 
-                        pdfFilename.value : 
-                        `${pdfFilename.value}.pdf`;
-                    
-                    // Standard page sizes in points (1pt = 1/72 inch)
-                    const sizes = {
-                        'A4': [595.28, 841.89],
-                        'Letter': [612, 792],
-                        'A5': [420.94, 595.28],
-                        'A3': [841.89, 1190.55]
-                    };
-                    
-                    // Process each file
-                    for (const fileObj of files) {
-                        const file = fileObj.file;
-                        
-                        try {
-                            // Read the file as array buffer
-                            const arrayBuffer = await file.arrayBuffer();
-                            
-                            // Convert Word to HTML using mammoth.js
-                            const result = await mammoth.extractRawText({ arrayBuffer });
-                            const text = result.value; // The raw text from the document
-                            
-                            // Add a new page to the PDF
-                            let [width, height] = sizes[pageSize];
-                            
-                            if (orientation === 'landscape') {
-                                [width, height] = [height, width];
-                            }
-                            
-                            let page = pdfDoc.addPage([width, height]);
-                            
-                            // Draw the text on the page
-                            const fontSize = 12;
-                            const margin = 50;
-                            const textWidth = width - (margin * 2);
-                            
-                            // Split text into paragraphs
-                            const paragraphs = text.split('\n\n');
-                            
-                            let y = height - margin - fontSize;
-                            for (const paragraph of paragraphs) {
-                                if (paragraph.trim() === '') continue;
-                                
-                                // Split paragraph into lines that fit within the page width
-                                const lines = splitTextIntoLines(paragraph, textWidth, fontSize);
-                                
-                                for (const line of lines) {
-                                    if (y < margin) {
-                                        // Add a new page if we run out of space
-                                        page = pdfDoc.addPage([width, height]);
-                                        y = height - margin - fontSize;
-                                    }
-                                    
-                                    page.drawText(line, {
-                                        x: margin,
-                                        y: y,
-                                        size: fontSize,
-                                        color: rgb(0, 0, 0),
-                                        maxWidth: textWidth
-                                    });
-                                    
-                                    y -= fontSize * 1.5; // Move to next line
-                                }
-                                
-                                y -= fontSize * 0.5; // Add extra space between paragraphs
-                            }
-                        } catch (error) {
-                            console.error('Error processing file:', file.name, error);
-                            showToast(`Error processing ${file.name}`, 'error');
-                            continue;
-                        }
-                    }
-                    
-                    // Save and download the PDF
-                    const pdfBytes = await pdfDoc.save();
-                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                    saveAs(blob, filename);
-                    
-                    showToast('PDF generated successfully!', 'success');
-                } catch (error) {
-                    console.error('Error generating PDF:', error);
-                    showToast('Error generating PDF. Please try again.', 'error');
-                } finally {
-                    loadingOverlay.classList.remove('active');
-                }
-            }
-
-            function splitTextIntoLines(text, maxWidth, fontSize) {
-                // This is a simplified version - in a real app you'd want to use
-                // PDFKit's text measurement or similar to properly handle word wrapping
-                const words = text.split(/\s+/);
-                const lines = [];
-                let currentLine = '';
-                
-                // Approximate character width (this is a rough estimate)
-                const charWidth = fontSize * 0.6;
-                const maxChars = Math.floor(maxWidth / charWidth);
-                
-                for (const word of words) {
-                    if ((currentLine + word).length > maxChars) {
-                        lines.push(currentLine);
-                        currentLine = word + ' ';
-                    } else {
-                        currentLine += word + ' ';
-                    }
-                }
-                
-                if (currentLine) {
-                    lines.push(currentLine);
-                }
-                
-                return lines;
-            }
-
-            function clearAllFiles() {
-                files = [];
-                updateUI();
-                showToast('All files cleared', 'success');
-            }
-
-            function showToast(message, type) {
-                toast.textContent = message;
-                toast.className = `toast ${type}`;
-                toast.classList.add('show');
-                
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 3000);
-            }
-
-            function toggleTheme() {
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-                themeToggle.textContent = newTheme === 'dark' ? '🌞' : '🌒';
-                currentTheme = newTheme;
-            }
+      fileList.innerHTML = '';
+      files.forEach((fileObj) => {
+        const file = fileObj.file;
+        const fileSizeStr = formatFileSize(file.size);
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        div.dataset.id = fileObj.id;
+        div.innerHTML = `
+          <div class="file-icon">📄</div>
+          <div class="file-info">
+            <div class="file-name" title="${file.name}">${file.name}</div>
+            <div class="file-size">${fileSizeStr}</div>
+          </div>
+          <div class="file-actions">
+            <button class="action-btn delete-btn" title="Delete">❌</button>
+          </div>
+        `;
+        fileList.appendChild(div);
+        // Delete button
+        div.querySelector('.delete-btn').addEventListener('click', () => {
+          deleteFile(fileObj.id);
         });
-    </script>
-</body>
-</html>
+      });
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function deleteFile(id) {
+      files = files.filter(f => f.id !== id);
+      updateUI();
+      showToast('File removed', 'success');
+    }
+
+    async function convertToPDF() {
+      if (files.length === 0) {
+        showToast('No files to convert', 'error');
+        return;
+      }
+      loadingOverlay.classList.add('active');
+
+      try {
+        const { PDFDocument, rgb } = PDFLib;
+        const pdfDoc = await PDFDocument.create();
+
+        const pageSize = pdfPageSize.value;
+        const orientation = pdfOrientation.value;
+        const filename = pdfFilename.value.trim().endsWith('.pdf') ? pdfFilename.value.trim() : pdfFilename.value.trim() + '.pdf';
+
+        const sizes = {
+          'A4': [595.28, 841.89],
+          'Letter': [612, 792],
+          'A5': [420.94, 595.28],
+          'A3': [841.89, 1190.55]
+        };
+
+        const [originalWidth, originalHeight] = sizes[pageSize];
+
+        for (const fileObj of files) {
+          const file = fileObj.file;
+          try {
+            const arrayBuffer = await file.arrayBuffer();
+            // Using mammoth.convertToHtml to preserve formatting
+            const result = await mammoth.convertToHtml({ arrayBuffer });
+            const htmlContent = result.value;
+
+            // Alternatively, for plain text:
+            // const result = await mammoth.extractRawText({ arrayBuffer });
+            // const text = result.value;
+
+            let [width, height] = [originalWidth, originalHeight];
+            if (orientation === 'landscape') {
+              [width, height] = [height, width];
+            }
+
+            let page = pdfDoc.addPage([width, height]);
+            const fontSize = 12;
+            const margin = 50;
+            const maxWidth = width - 2 * margin;
+
+            // For simplicity, extract text content from htmlContent if needed
+            // But here, for demonstration, we'll just add plain text
+            const textContent = (htmlContent.replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
+
+            const lines = splitTextIntoLines(textContent, maxWidth, fontSize);
+            let y = height - margin;
+
+            for (const line of lines) {
+              if (y < margin + fontSize) {
+                page = pdfDoc.addPage([width, height]);
+                y = height - margin;
+              }
+              page.drawText(line, {
+                x: margin,
+                y: y - fontSize,
+                size: fontSize,
+                color: rgb(0, 0, 0),
+              });
+              y -= fontSize * 1.5;
+            }
+          } catch (err) {
+            console.error('Error processing', file.name, err);
+            showToast(`Error processing ${file.name}`, 'error');
+          }
+        }
+
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        saveAs(blob, filename);
+        showToast('PDF generated successfully!', 'success');
+      } catch (err) {
+        console.error('Error generating PDF', err);
+        showToast('Error generating PDF. Please try again.', 'error');
+      } finally {
+        loadingOverlay.classList.remove('active');
+      }
+    }
+
+    function splitTextIntoLines(text, maxWidth, fontSize) {
+      const words = text.split(/\s+/);
+      const lines = [];
+      let currentLine = '';
+
+      const charWidth = fontSize * 0.6;
+      const maxChars = Math.floor(maxWidth / charWidth);
+
+      for (const word of words) {
+        if ((currentLine + word).length > maxChars) {
+          lines.push(currentLine.trim());
+          currentLine = word + ' ';
+        } else {
+          currentLine += word + ' ';
+        }
+      }
+      if (currentLine) lines.push(currentLine.trim());
+      return lines;
+    }
+
+    function clearAllFiles() {
+      files = [];
+      updateUI();
+      showToast('All files cleared', 'success');
+    }
+
+    function showToast(message, type) {
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function toggleTheme() {
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      themeToggle.textContent = newTheme === 'dark' ? '🌞' : '🌒';
+      currentTheme = newTheme;
+    }
+  });
+</script>
+    
