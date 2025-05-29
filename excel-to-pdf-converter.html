@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Free online tool to convert Excel files to PDF documents. Supports XLSX, XLS, CSV formats.">
+    <meta name="keywords" content="excel to pdf, xlsx to pdf, xls to pdf, csv to pdf, convert excel to pdf, free pdf converter">
+    <title>ExcelToPDF - Convert Excel Files to PDF Online</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.16.0/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- AdMob SDK -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-5117734305838946"></script>
+    <style>
+        :root {
+            /* Sky & Slate Color Theme */
+            --primary: #3B82F6;
+            --primary-dark: #60A5FA;
+            --accent: #FBBF24;
+            --accent-dark: #FACC15;
+            --bg-light: #F9FAFB;
+            --bg-dark: #111827;
+            --surface-light: #FFFFFF;
+            --surface-dark: #1F2937;
+            --text-light: #1F2937;
+            --text-dark: #F3F4F6;
+            --border-light: #E5E7EB;
+            --border-dark: #374151;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+            --error-light: #EF4444;
+            --error-dark: #F87171;
+            --success-light: #10B981;
+            --success-dark: #34D399;
+        }
+
+        [data-theme="dark"] {
+            --primary: var(--primary-dark);
+            --accent: var(--accent-dark);
+            --bg-color: var(--bg-dark);
+            --surface: var(--surface-dark);
+            --text-color: var(--text-dark);
+            --border-color: var(--border-dark);
+            --shadow-color: var(--shadow-dark);
+            --error-color: var(--error-dark);
+            --success-color: var(--success-dark);
+            --text-muted: #9CA3AF;
+        }
+
+        [data-theme="light"] {
+            --primary: #3B82F6;
+            --accent: #FBBF24;
+            --bg-color: var(--bg-light);
+            --surface: var(--surface-light);
+            --text-color: var(--text-light);
+            --border-color: var(--border-light);
+            --shadow-color: var(--shadow-light);
+            --error-color: var(--error-light);
+            --success-color: var(--success-light);
+            --text-muted: #6B7280;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+            font-weight: 400;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .ad-container {
+            width: 100%;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            text-align: center;
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .ad-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tool-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .upload-section {
+            background-color: var(--surface);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+
+        .upload-area.active {
+            border-color: var(--primary);
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            margin-bottom: 10px;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .upload-hint {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563EB;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--success-light);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        [data-theme="dark"] .btn-outline:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .preview-section {
+            background-color: var(--surface);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .section-title .badge {
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .file-icon {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .file-details {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+
+        .file-size {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 1.1rem;
+        }
+
+        .pdf-settings {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        input[type="text"], select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--surface);
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.95rem;
+            min-width: 200px;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loading-content {
+            background-color: var(--surface);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-color);
+            max-width: 300px;
+            width: 90%;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--surface);
+            color: var(--text-color);
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            border-left: 4px solid var(--primary);
+            font-weight: 500;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        .toast.error {
+            border-left-color: var(--error-color);
+        }
+
+        .toast.success {
+            border-left-color: var(--success-color);
+        }
+
+        .toast-icon {
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .pdf-settings {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            input[type="text"], select {
+                min-width: 100%;
+            }
+
+            .file-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .file-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+
+            .theme-toggle {
+                top: 15px;
+                right: 15px;
+            }
+
+            .upload-section, .preview-section {
+                padding: 20px;
+            }
+
+            .upload-area {
+                padding: 25px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌓</button>
+        
+        <header>
+            <h1>Excel to PDF Converter</h1>
+            <p class="subtitle">Upload Excel files (XLSX, XLS, CSV) and convert them to PDF documents with customizable settings.</p>
+        </header>
+
+        <!-- Top Ad Unit -->
+        <div class="ad-container">
+            <div>
+                <div class="ad-label">Advertisement</div>
+                <div id="ad-unit-top">
+                    <!-- AdMob Banner Ad -->
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-client="ca-app-pub-5117734305838946"
+                         data-ad-slot="7204353933"
+                         data-ad-format="auto"
+                         data-full-width-responsive="true"></ins>
+                    <script>
+                         (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <div class="tool-container">
+            <section class="upload-section">
+                <h2 class="section-title">
+                    <span class="badge">1</span>
+                    Upload Excel File
+                </h2>
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">📊</div>
+                    <div class="upload-text">Click to browse or drag & drop Excel file</div>
+                    <div class="upload-hint">Supports XLSX, XLS, CSV (Max 10MB)</div>
+                    <input type="file" id="file-input" accept=".xlsx,.xls,.csv">
+                </div>
+                <div class="controls">
+                    <button class="btn btn-primary" id="add-files-btn">
+                        <span>📁</span>
+                        Add File
+                    </button>
+                    <button class="btn btn-secondary" id="generate-pdf-btn" disabled>
+                        <span>📄</span>
+                        Convert to PDF
+                    </button>
+                    <button class="btn btn-outline" id="clear-all-btn" disabled>
+                        <span>🗑️</span>
+                        Clear File
+                    </button>
+                </div>
+            </section>
+
+            <!-- Middle Ad Unit -->
+            <div class="ad-container">
+                <div>
+                    <div class="ad-label">Advertisement</div>
+                    <div id="ad-unit-middle">
+                        <!-- AdMob Banner Ad -->
+                        <ins class="adsbygoogle"
+                             style="display:block"
+                             data-ad-client="ca-app-pub-5117734305838946"
+                             data-ad-slot="7204353933"
+                             data-ad-format="auto"
+                             data-full-width-responsive="true"></ins>
+                        <script>
+                             (adsbygoogle = window.adsbygoogle || []).push({});
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <section class="preview-section">
+                <h2 class="section-title">
+                    <span class="badge">2</span>
+                    File Preview & Settings
+                </h2>
+                <div class="pdf-settings">
+                    <div class="setting-group">
+                        <label for="pdf-filename">PDF Filename</label>
+                        <input type="text" id="pdf-filename" placeholder="output.pdf" value="output.pdf">
+                    </div>
+                    <div class="setting-group">
+                        <label for="pdf-page-size">Page Size</label>
+                        <select id="pdf-page-size">
+                            <option value="A4">A4</option>
+                            <option value="Letter">Letter</option>
+                            <option value="A5">A5</option>
+                            <option value="A3">A3</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label for="pdf-orientation">Orientation</label>
+                        <select id="pdf-orientation">
+                            <option value="portrait">Portrait</option>
+                            <option value="landscape">Landscape</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label for="pdf-margin">Margin (mm)</label>
+                        <input type="text" id="pdf-margin" placeholder="10" value="10">
+                    </div>
+                </div>
+                <div id="file-preview">
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <div class="empty-text">No file uploaded yet</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Bottom Ad Unit -->
+        <div class="ad-container">
+            <div>
+                <div class="ad-label">Advertisement</div>
+                <div id="ad-unit-bottom">
+                    <!-- AdMob Banner Ad -->
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-client="ca-app-pub-5117734305838946"
+                         data-ad-slot="7204353933"
+                         data-ad-format="auto"
+                         data-full-width-responsive="true"></ins>
+                    <script>
+                         (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div>
+            </div>
+        </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Generating PDF...</div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+  <script>
+  // Assign pdf-lib to a variable for ease of use
+  const PDFLib = window['pdf-lib'];
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('file-input');
+    const uploadArea = document.getElementById('upload-area');
+    const addFilesBtn = document.getElementById('add-files-btn');
+    const generatePdfBtn = document.getElementById('generate-pdf-btn');
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    const filePreview = document.getElementById('file-preview');
+    const pdfFilename = document.getElementById('pdf-filename');
+    const pdfPageSize = document.getElementById('pdf-page-size');
+    const pdfOrientation = document.getElementById('pdf-orientation');
+    const pdfMargin = document.getElementById('pdf-margin');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const toast = document.getElementById('toast');
+    const themeToggle = document.getElementById('theme-toggle');
+
+    let currentFile = null;
+
+    // Theme setup
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let currentTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    themeToggle.textContent = currentTheme === 'dark' ? '🌞' : '🌒';
+
+    // Event handlers
+    uploadArea.addEventListener('click', () => fileInput.click());
+    document.getElementById('add-files-btn').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileSelect);
+    uploadArea.addEventListener('dragover', handleDragOver);
+    uploadArea.addEventListener('dragleave', handleDragLeave);
+    uploadArea.addEventListener('drop', handleDrop);
+    document.getElementById('generate-pdf-btn').addEventListener('click', generatePDF);
+    document.getElementById('clear-all-btn').addEventListener('click', clearFile);
+    themeToggle.addEventListener('click', toggleTheme);
+
+    function handleFileSelect(e) {
+      const files = e.target.files;
+      if (files.length > 0) {
+        processFile(files[0]);
+      }
+      e.target.value = ''; // Reset input
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadArea.classList.add('active');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadArea.classList.remove('active');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadArea.classList.remove('active');
+      if (e.dataTransfer.files.length > 0) {
+        processFile(e.dataTransfer.files[0]);
+      }
+    }
+
+    function processFile(file) {
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // XLSX
+        'application/vnd.ms-excel', // XLS
+        'text/csv' // CSV
+      ];
+      const maxSize = 10 * 1024 * 1024; // 10MB
+
+      // Corrected if statement
+      if (!validTypes.includes(file.type)) {
+        showToast('Unsupported file type. Please upload XLSX, XLS, or CSV.', 'error');
+        return;
+      }
+
+      if (file.size > maxSize) {
+        showToast('File exceeds 10MB limit.', 'error');
+        return;
+      }
+
+      currentFile = file;
+      updateUI();
+    }
+
+    function updateUI() {
+      if (!currentFile) {
+        filePreview.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📊</div>
+            <div class="empty-text">No file uploaded yet</div>
+          </div>`;
+        document.getElementById('generate-pdf-btn').disabled = true;
+        document.getElementById('clear-all-btn').disabled = true;
+        return;
+      }
+
+      document.getElementById('generate-pdf-btn').disabled = false;
+      document.getElementById('clear-all-btn').disabled = false;
+
+      // Set default filename
+      const defaultName = currentFile.name.replace(/\.[^/.]+$/, '') + '.pdf';
+      if (pdfFilename.value.trim() === '' || pdfFilename.value === 'output.pdf') {
+        pdfFilename.value = defaultName;
+      }
+
+      // Show file info with remove button
+      filePreview.innerHTML = `
+        <div class="file-info">
+          <div class="file-icon">📊</div>
+          <div class="file-details">
+            <div class="file-name">${currentFile.name}</div>
+            <div class="file-size">${formatFileSize(currentFile.size)}</div>
+          </div>
+          <div class="file-actions">
+            <button class="action-btn" id="remove-file-btn" title="Remove file">❌</button>
+          </div>
+        </div>`;
+      document.getElementById('remove-file-btn').addEventListener('click', () => {
+        currentFile = null;
+        updateUI();
+        showToast('File removed', 'success');
+      });
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    async function generatePDF() {
+      if (!currentFile) {
+        showToast('No file to convert', 'error');
+        return;
+      }
+      loadingOverlay.classList.add('active');
+
+      try {
+        const { PDFDocument, rgb } = PDFLib;
+        const pdfDoc = await PDFDocument.create();
+
+        const pageSize = pdfPageSize.value;
+        const orientation = pdfOrientation.value;
+        const marginMm = parseFloat(pdfMargin.value) || 10;
+        const filename = pdfFilename.value.trim().endsWith('.pdf') ? pdfFilename.value.trim() : pdfFilename.value.trim() + '.pdf';
+
+        // Read file as array buffer
+        const arrayBuffer = await currentFile.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+
+        // Simplified: just add a text block with info
+        const sizes = {
+          'A4': [595.28, 841.89],
+          'Letter': [612, 792],
+          'A5': [420.94, 595.28],
+          'A3': [841.89, 1190.55]
+        };
+        let [pageWidth, pageHeight] = sizes[pageSize];
+
+        if (orientation === 'landscape') {
+          [pageWidth, pageHeight] = [pageHeight, pageWidth];
+        }
+
+        const marginPt = marginMm * 2.83465; // mm to points
+
+        const page = pdfDoc.addPage([pageWidth, pageHeight]);
+
+        // Add placeholder text
+        const text = `Excel data will be converted to PDF.\n\nFile: ${currentFile.name}\nSheet: ${firstSheetName}\n\n(Note: This is a simplified demo.)`;
+
+        page.drawText(text, {
+          x: marginPt,
+          y: pageHeight - marginPt - 50,
+          size: 12,
+          color: rgb(0, 0, 0),
+          maxWidth: pageWidth - 2 * marginPt,
+          lineHeight: 18,
+        });
+
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        saveAs(blob, filename);
+        showToast('PDF generated successfully!', 'success');
+      } catch (err) {
+        console.error('Error:', err);
+        showToast('Error generating PDF', 'error');
+      } finally {
+        loadingOverlay.classList.remove('active');
+      }
+    }
+
+    function clearFile() {
+      currentFile = null;
+      updateUI();
+      showToast('File cleared', 'success');
+    }
+
+    function showToast(message, type) {
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function toggleTheme() {
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      themeToggle.textContent = newTheme === 'dark' ? '🌞' : '🌒';
+      currentTheme = newTheme;
+    }
+  });
+</script>
+</body>
+</html>
