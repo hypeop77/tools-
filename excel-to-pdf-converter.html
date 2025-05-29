@@ -7,6 +7,7 @@
     <meta name="keywords" content="excel to pdf, xlsx to pdf, xls to pdf, csv to pdf, convert excel to pdf, free pdf converter">
     <title>ExcelToPDF - Convert Excel Files to PDF Online</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.16.0/pdf-lib.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -707,8 +708,7 @@
     </div>
 
     <div class="toast" id="toast"></div>
-
-  <script>
+ <script>
   // Assign pdf-lib to a variable for ease of use
   const PDFLib = window['pdf-lib'];
 
@@ -737,7 +737,7 @@
 
     // Event handlers
     uploadArea.addEventListener('click', () => fileInput.click());
-    document.getElementById('add-files-btn').addEventListener('click', () => fileInput.click());
+    addFilesBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileSelect);
     uploadArea.addEventListener('dragover', handleDragOver);
     uploadArea.addEventListener('dragleave', handleDragLeave);
@@ -776,15 +776,13 @@
     }
 
     function processFile(file) {
-      const validTypes = [
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // XLSX
-        'application/vnd.ms-excel', // XLS
-        'text/csv' // CSV
-      ];
+      // Better validation
+      const validExtensions = ['.xlsx', '.xls', '.csv'];
       const maxSize = 10 * 1024 * 1024; // 10MB
 
-      // Corrected if statement
-      if (!validTypes.includes(file.type)) {
+      const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+      if (!validExtensions.includes(fileExt)) {
         showToast('Unsupported file type. Please upload XLSX, XLS, or CSV.', 'error');
         return;
       }
@@ -813,7 +811,7 @@
       document.getElementById('generate-pdf-btn').disabled = false;
       document.getElementById('clear-all-btn').disabled = false;
 
-      // Set default filename
+      // Set default filename if not customized
       const defaultName = currentFile.name.replace(/\.[^/.]+$/, '') + '.pdf';
       if (pdfFilename.value.trim() === '' || pdfFilename.value === 'output.pdf') {
         pdfFilename.value = defaultName;
@@ -854,6 +852,11 @@
       loadingOverlay.classList.add('active');
 
       try {
+        if (!PDFLib) {
+          showToast('PDFLib not loaded', 'error');
+          return;
+        }
+
         const { PDFDocument, rgb } = PDFLib;
         const pdfDoc = await PDFDocument.create();
 
@@ -868,7 +871,7 @@
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
 
-        // Simplified: just add a text block with info
+        // Define page sizes
         const sizes = {
           'A4': [595.28, 841.89],
           'Letter': [612, 792],
@@ -932,6 +935,6 @@
       currentTheme = newTheme;
     }
   });
-</script>
+</script>  
 </body>
 </html>
