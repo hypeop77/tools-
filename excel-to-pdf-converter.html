@@ -7,7 +7,6 @@
     <meta name="keywords" content="excel to pdf, xlsx to pdf, xls to pdf, csv to pdf, convert excel to pdf, free pdf converter">
     <title>ExcelToPDF - Convert Excel Files to PDF Online</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.16.0/pdf-lib.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -708,235 +707,232 @@
     </div>
 
     <div class="toast" id="toast"></div>
- <script>
-  // Assign pdf-lib to a variable for ease of use
-  const PDFLib = window['pdf-lib'];
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const fileInput = document.getElementById('file-input');
-    const uploadArea = document.getElementById('upload-area');
-    const addFilesBtn = document.getElementById('add-files-btn');
-    const generatePdfBtn = document.getElementById('generate-pdf-btn');
-    const clearAllBtn = document.getElementById('clear-all-btn');
-    const filePreview = document.getElementById('file-preview');
-    const pdfFilename = document.getElementById('pdf-filename');
-    const pdfPageSize = document.getElementById('pdf-page-size');
-    const pdfOrientation = document.getElementById('pdf-orientation');
-    const pdfMargin = document.getElementById('pdf-margin');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const toast = document.getElementById('toast');
-    const themeToggle = document.getElementById('theme-toggle');
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('file-input');
+            const uploadArea = document.getElementById('upload-area');
+            const addFilesBtn = document.getElementById('add-files-btn');
+            const generatePdfBtn = document.getElementById('generate-pdf-btn');
+            const clearAllBtn = document.getElementById('clear-all-btn');
+            const filePreview = document.getElementById('file-preview');
+            const pdfFilename = document.getElementById('pdf-filename');
+            const pdfPageSize = document.getElementById('pdf-page-size');
+            const pdfOrientation = document.getElementById('pdf-orientation');
+            const pdfMargin = document.getElementById('pdf-margin');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const toast = document.getElementById('toast');
+            const themeToggle = document.getElementById('theme-toggle');
 
-    let currentFile = null;
+            let currentFile = null;
 
-    // Theme setup
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    let currentTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', currentTheme);
-    themeToggle.textContent = currentTheme === 'dark' ? '🌞' : '🌒';
+            // Theme setup
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            let currentTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            themeToggle.textContent = currentTheme === 'dark' ? '🌞' : '🌒';
 
-    // Event handlers
-    uploadArea.addEventListener('click', () => fileInput.click());
-    addFilesBtn.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', handleFileSelect);
-    uploadArea.addEventListener('dragover', handleDragOver);
-    uploadArea.addEventListener('dragleave', handleDragLeave);
-    uploadArea.addEventListener('drop', handleDrop);
-    document.getElementById('generate-pdf-btn').addEventListener('click', generatePDF);
-    document.getElementById('clear-all-btn').addEventListener('click', clearFile);
-    themeToggle.addEventListener('click', toggleTheme);
+            // Event handlers
+            uploadArea.addEventListener('click', () => fileInput.click());
+            addFilesBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            generatePdfBtn.addEventListener('click', generatePDF);
+            clearAllBtn.addEventListener('click', clearFile);
+            themeToggle.addEventListener('click', toggleTheme);
 
-    function handleFileSelect(e) {
-      const files = e.target.files;
-      if (files.length > 0) {
-        processFile(files[0]);
-      }
-      e.target.value = ''; // Reset input
-    }
+            function handleFileSelect(e) {
+                const files = e.target.files;
+                if (files.length > 0) {
+                    processFile(files[0]);
+                }
+                e.target.value = ''; // Reset input
+            }
 
-    function handleDragOver(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      uploadArea.classList.add('active');
-    }
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('active');
+            }
 
-    function handleDragLeave(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      uploadArea.classList.remove('active');
-    }
+            function handleDragLeave(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('active');
+            }
 
-    function handleDrop(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      uploadArea.classList.remove('active');
-      if (e.dataTransfer.files.length > 0) {
-        processFile(e.dataTransfer.files[0]);
-      }
-    }
+            function handleDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('active');
+                if (e.dataTransfer.files.length > 0) {
+                    processFile(e.dataTransfer.files[0]);
+                }
+            }
 
-    function processFile(file) {
-      // Better validation
-      const validExtensions = ['.xlsx', '.xls', '.csv'];
-      const maxSize = 10 * 1024 * 1024; // 10MB
+            function processFile(file) {
+                // Better validation
+                const validExtensions = ['.xlsx', '.xls', '.csv'];
+                const maxSize = 10 * 1024 * 1024; // 10MB
 
-      const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+                const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
 
-      if (!validExtensions.includes(fileExt)) {
-        showToast('Unsupported file type. Please upload XLSX, XLS, or CSV.', 'error');
-        return;
-      }
+                if (!validExtensions.includes(fileExt)) {
+                    showToast('Unsupported file type. Please upload XLSX, XLS, or CSV.', 'error');
+                    return;
+                }
 
-      if (file.size > maxSize) {
-        showToast('File exceeds 10MB limit.', 'error');
-        return;
-      }
+                if (file.size > maxSize) {
+                    showToast('File exceeds 10MB limit.', 'error');
+                    return;
+                }
 
-      currentFile = file;
-      updateUI();
-    }
+                currentFile = file;
+                updateUI();
+            }
 
-    function updateUI() {
-      if (!currentFile) {
-        filePreview.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">📊</div>
-            <div class="empty-text">No file uploaded yet</div>
-          </div>`;
-        document.getElementById('generate-pdf-btn').disabled = true;
-        document.getElementById('clear-all-btn').disabled = true;
-        return;
-      }
+            function updateUI() {
+                if (!currentFile) {
+                    filePreview.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📊</div>
+                            <div class="empty-text">No file uploaded yet</div>
+                        </div>`;
+                    generatePdfBtn.disabled = true;
+                    clearAllBtn.disabled = true;
+                    return;
+                }
 
-      document.getElementById('generate-pdf-btn').disabled = false;
-      document.getElementById('clear-all-btn').disabled = false;
+                generatePdfBtn.disabled = false;
+                clearAllBtn.disabled = false;
 
-      // Set default filename if not customized
-      const defaultName = currentFile.name.replace(/\.[^/.]+$/, '') + '.pdf';
-      if (pdfFilename.value.trim() === '' || pdfFilename.value === 'output.pdf') {
-        pdfFilename.value = defaultName;
-      }
+                // Set default filename if not customized
+                const defaultName = currentFile.name.replace(/\.[^/.]+$/, '') + '.pdf';
+                if (pdfFilename.value.trim() === '' || pdfFilename.value === 'output.pdf') {
+                    pdfFilename.value = defaultName;
+                }
 
-      // Show file info with remove button
-      filePreview.innerHTML = `
-        <div class="file-info">
-          <div class="file-icon">📊</div>
-          <div class="file-details">
-            <div class="file-name">${currentFile.name}</div>
-            <div class="file-size">${formatFileSize(currentFile.size)}</div>
-          </div>
-          <div class="file-actions">
-            <button class="action-btn" id="remove-file-btn" title="Remove file">❌</button>
-          </div>
-        </div>`;
-      document.getElementById('remove-file-btn').addEventListener('click', () => {
-        currentFile = null;
-        updateUI();
-        showToast('File removed', 'success');
-      });
-    }
+                // Show file info with remove button
+                filePreview.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-icon">📊</div>
+                        <div class="file-details">
+                            <div class="file-name">${currentFile.name}</div>
+                            <div class="file-size">${formatFileSize(currentFile.size)}</div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="action-btn" id="remove-file-btn" title="Remove file">❌</button>
+                        </div>
+                    </div>`;
+                document.getElementById('remove-file-btn').addEventListener('click', () => {
+                    currentFile = null;
+                    updateUI();
+                    showToast('File removed', 'success');
+                });
+            }
 
- <script>
-window.onload = () => {
-function formatFileSize(bytes) {
-      if (bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
 
-    async function generatePDF() {
-      if (!currentFile) {
-        showToast('No file to convert', 'error');
-        return;
-      }
-      loadingOverlay.classList.add('active');
+            async function generatePDF() {
+                if (!currentFile) {
+                    showToast('No file to convert', 'error');
+                    return;
+                }
+                loadingOverlay.classList.add('active');
 
-      try {
-        if (!PDFLib) {
-          showToast('PDFLib not loaded', 'error');
-          return;
-        }
+                try {
+                    const { PDFDocument, rgb } = PDFLib;
+                    const pdfDoc = await PDFDocument.create();
 
-        const { PDFDocument, rgb } = PDFLib;
-        const pdfDoc = await PDFDocument.create();
+                    const pageSize = pdfPageSize.value;
+                    const orientation = pdfOrientation.value;
+                    const marginMm = parseFloat(pdfMargin.value) || 10;
+                    const filename = pdfFilename.value.trim().endsWith('.pdf') ? 
+                        pdfFilename.value.trim() : 
+                        pdfFilename.value.trim() + '.pdf';
 
-        const pageSize = pdfPageSize.value;
-        const orientation = pdfOrientation.value;
-        const marginMm = parseFloat(pdfMargin.value) || 10;
-        const filename = pdfFilename.value.trim().endsWith('.pdf') ? pdfFilename.value.trim() : pdfFilename.value.trim() + '.pdf';
+                    // Read file as array buffer
+                    const arrayBuffer = await currentFile.arrayBuffer();
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
 
-        // Read file as array buffer
-        const arrayBuffer = await currentFile.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
+                    // Convert worksheet to HTML table
+                    const htmlTable = XLSX.utils.sheet_to_html(worksheet);
 
-        // Define page sizes
-        const sizes = {
-          'A4': [595.28, 841.89],
-          'Letter': [612, 792],
-          'A5': [420.94, 595.28],
-          'A3': [841.89, 1190.55]
-        };
-        let [pageWidth, pageHeight] = sizes[pageSize];
+                    // Define page sizes in points (1 inch = 72 points)
+                    const sizes = {
+                        'A4': [595.28, 841.89],    // 210mm x 297mm
+                        'Letter': [612, 792],       // 8.5in x 11in
+                        'A5': [420.94, 595.28],    // 148mm x 210mm
+                        'A3': [841.89, 1190.55]    // 297mm x 420mm
+                    };
+                    
+                    let [pageWidth, pageHeight] = sizes[pageSize];
 
-        if (orientation === 'landscape') {
-          [pageWidth, pageHeight] = [pageHeight, pageWidth];
-        }
+                    if (orientation === 'landscape') {
+                        [pageWidth, pageHeight] = [pageHeight, pageWidth];
+                    }
 
-        const marginPt = marginMm * 2.83465; // mm to points
+                    const marginPt = marginMm * 2.83465; // mm to points (1mm = 2.83465 points)
 
-        const page = pdfDoc.addPage([pageWidth, pageHeight]);
+                    const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
-        // Add placeholder text
-        const text = `Excel data will be converted to PDF.\n\nFile: ${currentFile.name}\nSheet: ${firstSheetName}\n\n(Note: This is a simplified demo.)`;
+                    // Add the Excel data as text (simplified for demo)
+                    const text = `Excel to PDF Conversion\n\nFile: ${currentFile.name}\nSheet: ${firstSheetName}\n\n(Note: This is a simplified demo. For full table conversion, additional processing is needed.)`;
 
-        page.drawText(text, {
-          x: marginPt,
-          y: pageHeight - marginPt - 50,
-          size: 12,
-          color: rgb(0, 0, 0),
-          maxWidth: pageWidth - 2 * marginPt,
-          lineHeight: 18,
+                    page.drawText(text, {
+                        x: marginPt,
+                        y: pageHeight - marginPt - 50,
+                        size: 12,
+                        color: rgb(0, 0, 0),
+                        maxWidth: pageWidth - 2 * marginPt,
+                        lineHeight: 18,
+                    });
+
+                    const pdfBytes = await pdfDoc.save();
+                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                    saveAs(blob, filename);
+                    showToast('PDF generated successfully!', 'success');
+                } catch (err) {
+                    console.error('Error:', err);
+                    showToast('Error generating PDF', 'error');
+                } finally {
+                    loadingOverlay.classList.remove('active');
+                }
+            }
+
+            function clearFile() {
+                currentFile = null;
+                updateUI();
+                showToast('File cleared', 'success');
+            }
+
+            function showToast(message, type) {
+                toast.textContent = message;
+                toast.className = `toast ${type}`;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            function toggleTheme() {
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                themeToggle.textContent = newTheme === 'dark' ? '🌞' : '🌒';
+                currentTheme = newTheme;
+            }
         });
-
-        const pdfBytes = await pdfDoc.save();
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        saveAs(blob, filename);
-        showToast('PDF generated successfully!', 'success');
-      } catch (err) {
-        console.error('Error:', err);
-        showToast('Error generating PDF', 'error');
-      } finally {
-        loadingOverlay.classList.remove('active');
-      }
-    }
-
-    function clearFile() {
-      currentFile = null;
-      updateUI();
-      showToast('File cleared', 'success');
-    }
-
-    function showToast(message, type) {
-      toast.textContent = message;
-      toast.className = `toast ${type}`;
-      toast.classList.add('show');
-      setTimeout(() => {
-        toast.classList.remove('show');
-      }, 3000);
-    }
-
-    function toggleTheme() {
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      themeToggle.textContent = newTheme === 'dark' ? '🌞' : '🌒';
-      currentTheme = newTheme;
-    }
-  };
-</script>  
+    </script>
 </body>
 </html>
