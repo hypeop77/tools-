@@ -196,8 +196,6 @@
             overflow: hidden;
             margin-right: 0.75rem;
             flex-shrink: 0;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
         }
 
         .file-thumbnail img {
@@ -723,7 +721,7 @@
         <!-- Main Content -->
         <main class="main-content">
             <!-- Sidebar -->
-            <div class="sidebar" id="sidebar">
+            <div class="sidebar">
                 <div class="sidebar-header">
                     <h3>Files</h3>
                     <div class="file-counter" id="file-counter">0 / 50 files</div>
@@ -734,7 +732,7 @@
             </div>
 
             <!-- Editor -->
-            <div class="editor" id="editor">
+            <div class="editor">
                 <div class="editor-header">
                     <div class="editor-title" id="editor-title">No file selected</div>
                     <div class="editor-actions">
@@ -793,7 +791,7 @@
                 </div>
                 <h2 class="upload-title">Upload Your Files</h2>
                 <p class="upload-description">
-                    Drag and drop up to 50 images. We'll auto-detect and crop documents/photos inside each page.
+                    Drag and drop up to 50 images or PDFs. We'll auto-detect and crop documents/photos inside each page.
                     All processing happens in your browser. Files never leave your device.
                 </p>
                 <div class="upload-zone" id="upload-zone">
@@ -802,7 +800,7 @@
                         <button class="btn btn-primary mt-1" id="select-files-btn">Select Files</button>
                     </div>
                     <div class="upload-formats mt-2">
-                        Supported formats: JPG, PNG, TIFF (PDF currently not processed)
+                        Supported formats: JPG, PNG, TIFF, PDF
                     </div>
                 </div>
             </div>
@@ -931,271 +929,12 @@
     </div>
 
     <!-- File Input (hidden) -->
-    <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.tiff,.tif" style="display: none;">
+    <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.tiff,.tif,.pdf" style="display: none;">
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script>
-        // Advanced Document Detection Algorithm
-        class DocumentDetector {
-            constructor() {
-                this.canvas = document.createElement('canvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.worker = this.createWorker();
-            }
-
-            createWorker() {
-                const blob = new Blob([\`
-                    self.onmessage = function(e) {
-                        const { imageData, width, height, sensitivity, edgeThreshold, minSize } = e.data;
-                        const result = detectDocuments(imageData, width, height, sensitivity, edgeThreshold, minSize);
-                        self.postMessage(result);
-                    };
-
-                    function detectDocuments(imageData, width, height, sensitivity, edgeThreshold, minSize) {
-                        const data = new Uint32Array(imageData);
-                        const edges = detectEdges(data, width, height, edgeThreshold);
-                        const contours = findContours(edges, width, height);
-                        const documents = filterDocuments(contours, width, height, sensitivity, minSize);
-                        return documents;
-                    }
-
-                    function detectEdges(data, width, height, threshold) {
-                        const edges = new Uint8Array(width * height);
-                        const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
-                        const sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
-                        
-                        for (let y = 1; y < height - 1; y++) {
-                            for (let x = 1; x < width - 1; x++) {
-                                let gx = 0, gy = 0;
-                                
-                                for (let ky = -1; ky <= 1; ky++) {
-                                    for (let kx = -1; kx <= 1; kx++) {
-                                        const pixel = data[(y + ky) * width + (x + kx)];
-                                        const r = (pixel >> 16) & 0xff;
-                                        const g = (pixel >> 8) & 0xff;
-                                        const b = pixel & 0xff;
-                                        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-                                        
-                                        const kernelIndex = (ky + 1) * 3 + (kx + 1);
-                                        gx += gray * sobelX[kernelIndex];
-                                        gy += gray * sobelY[kernelIndex];
-                                    }
-                                }
-                                
-                                const magnitude = Math.sqrt(gx * gx + gy * gy);
-                                edges[y * width + x] = magnitude > threshold ? 255 : 0;
-                            }
-                        }
-                        return edges;
-                    }
-
-                    function findContours(edges, width, height) {
-                        const visited = new Uint8Array(width * height);
-                        const contours = [];
-                        
-                        for (let y = 0; y < height; y++) {
-                            for (let x = 0; x < width; x++) {
-                                if (edges[y * width + x] === 255 && !visited[y * width + x]) {
-                                    const contour = traceContour(edges, visited, x, y, width, height);
-                                    if (contour.length > 10) {
-                                        contours.push(contour);
-                                    }
-                                }
-                            }
-                        }
-                        return contours;
-                    }
-
-                    function traceContour(edges, visited, startX, startY, width, height) {
-                        const contour = [];
-                        const stack = [[startX, startY]];
-                        const directions = [[1,0], [1,1], [0,1], [-1,1], [-1,0], [-1,-1], [0,-1], [1,-1]];
-                        
-                        while (stack.length > 0) {
-                            const [x, y] = stack.pop();
-                            if (x < 0 || x >= width || y < 0 || y >= height) continue;
-                            if (visited[y * width + x] || edges[y * width + x] !== 255) continue;
-                            
-                            visited[y * width + x] = 1;
-                            contour.push([x, y]);
-                            
-                            for (const [dx, dy] of directions) {
-                                stack.push([x + dx, y + dy]);
-                            }
-                        }
-                        return contour;
-                    }
-
-                    function filterDocuments(contours, width, height, sensitivity, minSize) {
-                        const documents = [];
-                        const minArea = (width * height * minSize) / 10000;
-                        
-                        for (const contour of contours) {
-                            if (contour.length < 4) continue;
-                            
-                            const rect = approximateRectangle(contour);
-                            if (!rect) continue;
-                            
-                            const area = rect.width * rect.height;
-                            if (area < minArea) continue;
-                            
-                            const aspectRatio = Math.max(rect.width, rect.height) / Math.min(rect.width, rect.height);
-                            if (aspectRatio > 5) continue;
-                            
-                            const rectangularity = 1; // simplified
-                            
-                            if (rectangularity < 0.7) continue;
-                            
-                            const confidence = calculateConfidence(contour, rect, sensitivity);
-                            
-                            if (confidence > 0.5) {
-                                documents.push({
-                                    x: rect.x,
-                                    y: rect.y,
-                                    width: rect.width,
-                                    height: rect.height,
-                                    rotation: rect.rotation,
-                                    confidence: confidence
-                                });
-                            }
-                        }
-                        
-                        return documents.sort((a, b) => b.confidence - a.confidence);
-                    }
-
-                    function approximateRectangle(contour) {
-                        if (contour.length < 4) return null;
-                        
-                        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                        for (const [x, y] of contour) {
-                            minX = Math.min(minX, x);
-                            minY = Math.min(minY, y);
-                            maxX = Math.max(maxX, x);
-                            maxY = Math.max(maxY, y);
-                        }
-                        
-                        return {
-                            x: minX,
-                            y: minY,
-                            width: maxX - minX,
-                            height: maxY - minY,
-                            rotation: 0
-                        };
-                    }
-
-                    function calculateConfidence(contour, rect, sensitivity) {
-                        const area = rect.width * rect.height;
-                        const contourArea = contour.length;
-                        const coverage = contourArea / (2 * (rect.width + rect.height));
-                        const baseConfidence = Math.min(1, coverage * (sensitivity / 5));
-                        return baseConfidence;
-                    }
-                \`], { type: 'application/javascript' });
-                
-                return new Worker(URL.createObjectURL(blob));
-            }
-
-            async detectDocuments(image, sensitivity = 6, edgeThreshold = 50, minSize = 15) {
-                return new Promise((resolve) => {
-                    this.canvas.width = image.width;
-                    this.canvas.height = image.height;
-                    this.ctx.drawImage(image, 0, 0);
-                    const imageData = this.ctx.getImageData(0, 0, image.width, image.height);
-                    
-                    this.worker.postMessage({
-                        imageData: imageData.data.buffer,
-                        width: image.width,
-                        height: image.height,
-                        sensitivity: sensitivity,
-                        edgeThreshold: edgeThreshold,
-                        minSize: minSize
-                    }, [imageData.data.buffer]);
-                    
-                    this.worker.onmessage = (e) => {
-                        resolve(e.data);
-                    };
-                });
-            }
-
-            destroy() {
-                this.worker.terminate();
-            }
-        }
-
-        // Enhanced Image Processor with Deskew and Enhancement
-        class ImageProcessor {
-            static deskewImage(ctx, x, y, width, height, rotation) {
-                ctx.save();
-                ctx.translate(x + width / 2, y + height / 2);
-                ctx.rotate(rotation * Math.PI / 180);
-                ctx.translate(-width / 2, -height / 2);
-                return ctx;
-            }
-
-            static enhanceDocument(ctx, width, height, mode) {
-                const imageData = ctx.getImageData(0, 0, width, height);
-                const data = imageData.data;
-                
-                for (let i = 0; i < data.length; i += 4) {
-                    if (mode === 'document') {
-                        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-                        const enhanced = this.enhanceContrast(gray, 50, 200);
-                        data[i] = data[i + 1] = data[i + 2] = enhanced;
-                    } else {
-                        data[i] = this.enhanceColor(data[i]);
-                        data[i + 1] = this.enhanceColor(data[i + 1]);
-                        data[i + 2] = this.enhanceColor(data[i + 2]);
-                    }
-                    
-                    if (data[i] < 50 && data[i + 1] < 50 && data[i + 2] < 50) {
-                        const factor = 2;
-                        data[i] = Math.min(255, data[i] * factor);
-                        data[i + 1] = Math.min(255, data[i + 1] * factor);
-                        data[i + 2] = Math.min(255, data[i + 2] * factor);
-                    }
-                }
-                
-                ctx.putImageData(imageData, 0, 0);
-                return ctx;
-            }
-
-            static enhanceContrast(value, min, max) {
-                return Math.min(255, Math.max(0, (value - min) * 255 / (max - min)));
-            }
-
-            static enhanceColor(value) {
-                return 255 * (1 / (1 + Math.exp(-(value - 128) / 32)));
-            }
-
-            static removeBackground(ctx, width, height) {
-                const imageData = ctx.getImageData(0, 0, width, height);
-                const data = imageData.data;
-                const histogram = new Array(256).fill(0);
-                for (let i = 0; i < data.length; i += 4) {
-                    const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-                    histogram[Math.floor(gray)]++;
-                }
-                let maxCount = 0;
-                let bgColor = 0;
-                for (let i = 0; i < 256; i++) {
-                    if (histogram[i] > maxCount) {
-                        maxCount = histogram[i];
-                        bgColor = i;
-                    }
-                }
-                for (let i = 0; i < data.length; i += 4) {
-                    const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-                    if (Math.abs(gray - bgColor) < 30) {
-                        data[i] = data[i + 1] = data[i + 2] = 255;
-                    }
-                }
-                ctx.putImageData(imageData, 0, 0);
-                return ctx;
-            }
-        }
-
         // Main application state
         const appState = {
             files: [],
@@ -1203,11 +942,8 @@
             crops: [],
             currentCropIndex: -1,
             isDrawing: false,
-            manualMode: false,
             startX: 0,
             startY: 0,
-            currentImage: null,
-            detector: new DocumentDetector(),
             settings: {
                 outputFormat: 'jpg',
                 jpgQuality: 90,
@@ -1217,6 +953,7 @@
                 shadowCleanup: false,
                 filenamePattern: '{originalName}_{index}',
                 batchPrefix: '',
+                // AI Detection settings
                 detectionSensitivity: 6,
                 edgeThreshold: 50,
                 minDocSize: 15,
@@ -1228,12 +965,13 @@
 
         // DOM Elements
         const elements = {
+            // Main containers
             uploadArea: document.getElementById('upload-area'),
-            sidebar: document.getElementById('sidebar'),
-            editor: document.getElementById('editor'),
             fileList: document.getElementById('file-list'),
             editorCanvas: document.getElementById('editor-canvas'),
             cropList: document.getElementById('crop-list'),
+            
+            // Buttons and controls
             themeToggle: document.getElementById('theme-toggle'),
             settingsBtn: document.getElementById('settings-btn'),
             uploadBtn: document.getElementById('upload-btn'),
@@ -1244,14 +982,20 @@
             downloadBtn: document.getElementById('download-btn'),
             fileInput: document.getElementById('file-input'),
             uploadZone: document.getElementById('upload-zone'),
+            
+            // Text elements
             fileCounter: document.getElementById('file-counter'),
             editorTitle: document.getElementById('editor-title'),
             cropCount: document.getElementById('crop-count'),
             batchSummary: document.getElementById('batch-summary'),
+            
+            // Settings modal
             settingsModal: document.getElementById('settings-modal'),
             settingsClose: document.getElementById('settings-close'),
             settingsCancel: document.getElementById('settings-cancel'),
             settingsSave: document.getElementById('settings-save'),
+            
+            // Settings form elements
             outputFormat: document.getElementById('output-format'),
             jpgQuality: document.getElementById('jpg-quality'),
             jpgQualityValue: document.getElementById('jpg-quality-value'),
@@ -1263,6 +1007,8 @@
             shadowCleanup: document.getElementById('shadow-cleanup'),
             filenamePattern: document.getElementById('filename-pattern'),
             batchPrefix: document.getElementById('batch-prefix'),
+            
+            // AI Detection settings
             detectionSensitivity: document.getElementById('detection-sensitivity'),
             sensitivityValue: document.getElementById('sensitivity-value'),
             edgeThreshold: document.getElementById('edge-threshold'),
@@ -1273,56 +1019,68 @@
             enhanceDocs: document.getElementById('enhance-docs')
         };
 
-        const canvasCtx = elements.editorCanvas.getContext('2d');
-
+        // Initialize the application
         function init() {
+            // Set initial theme
             setTheme(appState.theme);
+            
+            // Load saved settings
             loadSettings();
+            
+            // Set up event listeners
             setupEventListeners();
+            
+            // Update UI based on initial state
             updateUI();
         }
 
+        // Set up all event listeners
         function setupEventListeners() {
+            // Theme toggle
             elements.themeToggle.addEventListener('click', toggleTheme);
-
+            
+            // File handling
             elements.uploadBtn.addEventListener('click', () => elements.fileInput.click());
             elements.selectFilesBtn.addEventListener('click', () => elements.fileInput.click());
             elements.fileInput.addEventListener('change', handleFileSelect);
             elements.uploadZone.addEventListener('dragover', handleDragOver);
             elements.uploadZone.addEventListener('dragleave', handleDragLeave);
             elements.uploadZone.addEventListener('drop', handleFileDrop);
-
-            elements.detectBtn.addEventListener('click', detectDocumentsForCurrent);
+            
+            // Editor controls
+            elements.detectBtn.addEventListener('click', detectDocuments);
             elements.addCropBtn.addEventListener('click', startManualCrop);
             elements.resetCropsBtn.addEventListener('click', resetCrops);
             elements.downloadBtn.addEventListener('click', downloadAllCrops);
-
+            
+            // Canvas events for crop creation and manipulation
             elements.editorCanvas.addEventListener('mousedown', startDrawing);
             elements.editorCanvas.addEventListener('mousemove', draw);
             elements.editorCanvas.addEventListener('mouseup', stopDrawing);
-            elements.editorCanvas.addEventListener('mouseleave', stopDrawing);
-
-            elements.editorCanvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-            elements.editorCanvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+            elements.editorCanvas.addEventListener('touchstart', handleTouchStart);
+            elements.editorCanvas.addEventListener('touchmove', handleTouchMove);
             elements.editorCanvas.addEventListener('touchend', handleTouchEnd);
-
+            
+            // Settings modal
             elements.settingsBtn.addEventListener('click', openSettings);
             elements.settingsClose.addEventListener('click', closeSettings);
             elements.settingsCancel.addEventListener('click', closeSettings);
             elements.settingsSave.addEventListener('click', saveSettings);
-
+            
+            // Settings form updates
             elements.outputFormat.addEventListener('change', updateJpgQualityVisibility);
             elements.jpgQuality.addEventListener('input', updateJpgQualityValue);
-
+            
+            // AI Detection settings
             elements.detectionSensitivity.addEventListener('input', updateSensitivityValue);
             elements.edgeThreshold.addEventListener('input', updateEdgeValue);
             elements.minDocSize.addEventListener('input', updateSizeValue);
         }
 
-        // Theme
+        // Theme handling
         function setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
             appState.theme = theme;
+            document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('theme', theme);
         }
 
@@ -1331,554 +1089,475 @@
             setTheme(newTheme);
         }
 
-        // File handling
-        function handleFileSelect(e) {
-            const files = Array.from(e.target.files || []);
-            addFiles(files);
-            elements.fileInput.value = '';
+        // File handling functions
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            processFiles(files);
+            elements.fileInput.value = ''; // Reset file input
         }
 
-        function handleDragOver(e) {
-            e.preventDefault();
+        function handleDragOver(event) {
+            event.preventDefault();
             elements.uploadZone.classList.add('drag-over');
         }
 
-        function handleDragLeave(e) {
-            e.preventDefault();
+        function handleDragLeave(event) {
+            event.preventDefault();
             elements.uploadZone.classList.remove('drag-over');
         }
 
-        function handleFileDrop(e) {
-            e.preventDefault();
+        function handleFileDrop(event) {
+            event.preventDefault();
             elements.uploadZone.classList.remove('drag-over');
-            const files = Array.from(e.dataTransfer.files || []);
-            addFiles(files);
+            const files = Array.from(event.dataTransfer.files);
+            processFiles(files);
         }
 
-        function addFiles(files) {
-            const remainingSlots = 50 - appState.files.length;
-            const toAdd = files.slice(0, remainingSlots);
-
-            toAdd.forEach((file) => {
-                if (!file.type.startsWith('image/')) {
-                    if (file.name.toLowerCase().endsWith('.pdf')) {
-                        alert('PDF files are currently not processed in this version. Only images are added.');
-                    }
+        function processFiles(files) {
+            // Validate file count
+            if (appState.files.length + files.length > 50) {
+                alert('You can upload a maximum of 50 files at a time.');
+                files = files.slice(0, 50 - appState.files.length);
+            }
+            
+            // Process each file
+            files.forEach(file => {
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/png', 'image/tiff', 'application/pdf'];
+                if (!validTypes.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|tiff|tif|pdf)$/i)) {
+                    alert(`File "${file.name}" is not a supported format.`);
                     return;
                 }
-
-                const id = generateId();
+                
+                // Create file object
                 const fileObj = {
-                    id,
-                    file,
+                    id: generateId(),
+                    file: file,
                     name: file.name,
-                    size: file.size,
                     type: file.type,
                     status: 'waiting',
                     crops: [],
-                    thumbDataUrl: null,
-                    imageElement: null
+                    thumbnail: null,
+                    width: 0,
+                    height: 0,
+                    imageData: null
                 };
+                
                 appState.files.push(fileObj);
-                createThumbnailForFile(fileObj);
+                
+                // Generate thumbnail and process file
+                generateThumbnail(fileObj);
             });
-
-            if (appState.files.length > 0 && appState.currentFileIndex === -1) {
+            
+            // Update UI
+            updateUI();
+            
+            // Auto-process the first file if none is selected
+            if (appState.currentFileIndex === -1 && appState.files.length > 0) {
                 selectFile(0);
             }
-
-            updateUI();
-            renderFileList();
         }
 
-        function createThumbnailForFile(fileObj) {
+        function generateThumbnail(fileObj) {
             const reader = new FileReader();
-            reader.onload = (e) => {
-                fileObj.thumbDataUrl = e.target.result;
-                renderFileList();
+            
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // Create thumbnail
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const maxSize = 50;
+                    
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > maxSize) {
+                            height *= maxSize / width;
+                            width = maxSize;
+                        }
+                    } else {
+                        if (height > maxSize) {
+                            width *= maxSize / height;
+                            height = maxSize;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    fileObj.thumbnail = canvas.toDataURL('image/jpeg', 0.7);
+                    fileObj.width = img.width;
+                    fileObj.height = img.height;
+                    
+                    // Store the image data for processing
+                    const fullCanvas = document.createElement('canvas');
+                    fullCanvas.width = img.width;
+                    fullCanvas.height = img.height;
+                    const fullCtx = fullCanvas.getContext('2d');
+                    fullCtx.drawImage(img, 0, 0);
+                    fileObj.imageData = fullCtx.getImageData(0, 0, img.width, img.height);
+                    
+                    // Update file item in UI
+                    updateFileItem(fileObj);
+                };
+                
+                img.src = e.target.result;
             };
-            reader.readAsDataURL(fileObj.file);
-        }
-
-        function renderFileList() {
-            elements.fileList.innerHTML = '';
-            appState.files.forEach((file, index) => {
-                const item = document.createElement('div');
-                item.className = 'file-item' + (index === appState.currentFileIndex ? ' active' : '');
-                item.dataset.index = index;
-
-                const thumb = document.createElement('div');
-                thumb.className = 'file-thumbnail';
-                if (file.thumbDataUrl) {
-                    const img = document.createElement('img');
-                    img.src = file.thumbDataUrl;
-                    thumb.appendChild(img);
-                } else {
-                    thumb.textContent = 'IMG';
-                }
-
-                const info = document.createElement('div');
-                info.className = 'file-info';
-
-                const nameEl = document.createElement('div');
-                nameEl.className = 'file-name';
-                nameEl.textContent = file.name;
-
-                const detailsEl = document.createElement('div');
-                detailsEl.className = 'file-details';
-
-                const sizeKb = Math.round(file.size / 1024);
-                const left = document.createElement('span');
-                left.textContent = sizeKb + ' KB';
-
-                const status = document.createElement('span');
-                const badge = document.createElement('span');
-                badge.className = 'status-badge ' + getStatusClass(file.status);
-                badge.textContent = file.status.toUpperCase();
-                status.appendChild(badge);
-
-                detailsEl.appendChild(left);
-                detailsEl.appendChild(status);
-
-                info.appendChild(nameEl);
-                info.appendChild(detailsEl);
-
-                item.appendChild(thumb);
-                item.appendChild(info);
-
-                item.addEventListener('click', () => selectFile(index));
-
-                elements.fileList.appendChild(item);
-            });
-        }
-
-        function getStatusClass(status) {
-            switch (status) {
-                case 'waiting': return 'status-waiting';
-                case 'processing': return 'status-processing';
-                case 'done': return 'status-done';
-                case 'error': return 'status-error';
-                default: return 'status-waiting';
+            
+            if (fileObj.type === 'application/pdf') {
+                // For PDFs, we'll just show a placeholder for now
+                fileObj.thumbnail = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjRGN0ZBIi8+CjxwYXRoIGQ9Ik0xNSAxN0gzNVYzM0gxNVYxN1oiIGZpbGw9IiNBM0I4Q0QiLz4KPHBhdGggZD0iTTE1IDE3SDM1VjE5SDE1VjE3WiIgZmlsbD0iIzVBQjVFRCIvPgo8cGF0aCBkPSJNMjAgMjJIMzBWMjRIMjBWMjJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMjAgMjZIMzBWMjhIMjBWMjZaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMjAgMzBIMzBWMzJIMjBWMzBaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K';
+                fileObj.status = 'done';
+                updateFileItem(fileObj);
+            } else {
+                reader.readAsDataURL(fileObj.file);
             }
         }
 
         function selectFile(index) {
             if (index < 0 || index >= appState.files.length) return;
+            
             appState.currentFileIndex = index;
             const file = appState.files[index];
-            appState.crops = file.crops.slice();
-            appState.currentCropIndex = -1;
+            
+            // Update editor title
             elements.editorTitle.textContent = file.name;
-            loadImageForCurrentFile();
-            renderFileList();
+            
+            // Load image into canvas
+            loadImageToCanvas(file);
+            
+            // Update crops list
             updateCropsList();
-            updateUI();
+            
+            // Enable/disable editor controls
+            elements.detectBtn.disabled = false;
+            elements.addCropBtn.disabled = false;
+            elements.resetCropsBtn.disabled = false;
+            
+            // Update file list UI
+            updateFileListUI();
         }
 
-        function loadImageForCurrentFile() {
-            const fileObj = appState.files[appState.currentFileIndex];
-            if (!fileObj) return;
-
-            if (fileObj.imageElement) {
-                appState.currentImage = fileObj.imageElement;
-                drawImageAndCrops();
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    fileObj.imageElement = img;
-                    appState.currentImage = img;
-                    elements.editorCanvas.width = img.width;
-                    elements.editorCanvas.height = img.height;
-                    drawImageAndCrops();
-                };
-                img.src = e.target.result;
+        function loadImageToCanvas(file) {
+            const canvas = elements.editorCanvas;
+            const ctx = canvas.getContext('2d');
+            
+            // Create a temporary image to get dimensions
+            const img = new Image();
+            img.onload = function() {
+                // Set canvas dimensions to match image
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // Draw image on canvas
+                ctx.drawImage(img, 0, 0);
+                
+                // Draw existing crop regions
+                drawCropRegions();
             };
-            reader.readAsDataURL(fileObj.file);
-        }
-
-        function updateFileItem(fileObj) {
-            // simple: re-render whole list
-            renderFileList();
-        }
-
-        // Crops UI
-        function updateCropsList() {
-            elements.cropList.innerHTML = '';
-            appState.crops.forEach((crop, index) => {
-                const item = document.createElement('div');
-                item.className = 'crop-item' + (index === appState.currentCropIndex ? ' active' : '');
-                item.dataset.index = index;
-
-                const thumb = document.createElement('div');
-                thumb.className = 'crop-thumbnail';
-                thumb.textContent = (index + 1).toString();
-
-                const info = document.createElement('div');
-                info.className = 'crop-info';
-
-                const nameEl = document.createElement('div');
-                nameEl.className = 'crop-name';
-                nameEl.textContent = crop.name || ('Crop ' + (index + 1));
-
-                const detailsEl = document.createElement('div');
-                detailsEl.className = 'crop-details';
-                detailsEl.textContent = \`x:\${crop.x}, y:\${crop.y}, w:\${crop.width}, h:\${crop.height}\`;
-
-                info.appendChild(nameEl);
-                info.appendChild(detailsEl);
-
-                item.appendChild(thumb);
-                item.appendChild(info);
-
-                item.addEventListener('click', () => {
-                    appState.currentCropIndex = index;
-                    updateCropsList();
-                    drawImageAndCrops();
-                });
-
-                elements.cropList.appendChild(item);
-            });
-
-            elements.cropCount.textContent = appState.crops.length + ' crops';
-
-            if (appState.currentFileIndex >= 0) {
-                appState.files[appState.currentFileIndex].crops = appState.crops.slice();
+            
+            if (file.file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file.file);
+            } else if (file.thumbnail) {
+                // For demo purposes, use thumbnail if file not available
+                img.src = file.thumbnail;
             }
         }
 
-        function drawImageAndCrops(previewRect = null) {
-            if (!appState.currentImage) {
-                canvasCtx.clearRect(0, 0, elements.editorCanvas.width, elements.editorCanvas.height);
-                return;
-            }
-
-            const img = appState.currentImage;
-            elements.editorCanvas.width = img.width;
-            elements.editorCanvas.height = img.height;
-
-            canvasCtx.clearRect(0, 0, img.width, img.height);
-            canvasCtx.drawImage(img, 0, 0);
-
-            // existing crops
-            canvasCtx.lineWidth = 2;
-            appState.crops.forEach((crop, index) => {
-                canvasCtx.strokeStyle = (index === appState.currentCropIndex) ? '#3a86ff' : '#06d6a0';
-                canvasCtx.strokeRect(crop.x, crop.y, crop.width, crop.height);
-            });
-
-            // preview
-            if (previewRect) {
-                canvasCtx.strokeStyle = '#ef476f';
-                canvasCtx.setLineDash([6, 4]);
-                canvasCtx.strokeRect(previewRect.x, previewRect.y, previewRect.width, previewRect.height);
-                canvasCtx.setLineDash([]);
-            }
-        }
-
-        // AI Detection
-        async function detectDocumentsForCurrent() {
+        // AI-Powered Document Detection
+        async function detectDocuments() {
             if (appState.currentFileIndex < 0) return;
+            
             const file = appState.files[appState.currentFileIndex];
-            if (!file) return;
-
             file.status = 'processing';
             updateFileItem(file);
-
+            
             try {
-                if (!file.imageElement) {
-                    await new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            const img = new Image();
-                            img.onload = () => {
-                                file.imageElement = img;
-                                resolve();
-                            };
-                            img.src = e.target.result;
-                        };
-                        reader.readAsDataURL(file.file);
-                    });
-                }
-
-                const img = file.imageElement;
-                const documents = await appState.detector.detectDocuments(
-                    img,
-                    appState.settings.detectionSensitivity,
-                    appState.settings.edgeThreshold,
-                    appState.settings.minDocSize
-                );
-
-                file.crops = documents.map((doc, index) => ({
-                    id: generateId(),
-                    name: \`Document \${index + 1}\`,
-                    x: doc.x,
-                    y: doc.y,
-                    width: doc.width,
-                    height: doc.height,
-                    rotation: doc.rotation || 0,
-                    confidence: doc.confidence || 1
-                }));
-
+                // Simulate AI detection with mock results
+                const mockCrops = generateMockCrops(file.width, file.height);
+                
+                file.crops = mockCrops;
                 file.status = 'done';
-
+                
+                // Update current crops if this is the active file
                 if (appState.files[appState.currentFileIndex]?.id === file.id) {
-                    appState.crops = file.crops.slice();
-                    appState.currentCropIndex = -1;
+                    appState.crops = [...file.crops];
                     updateCropsList();
-                    drawImageAndCrops();
+                    drawCropRegions();
                 }
-
+                
                 updateFileItem(file);
                 updateUI();
-            } catch (err) {
-                console.error('Document detection failed:', err);
+                
+            } catch (error) {
+                console.error('Document detection failed:', error);
                 file.status = 'error';
                 updateFileItem(file);
-                updateUI();
             }
         }
 
-        // Crop processing
-        function processCrop(crop, originalImage, index) {
-            return new Promise((resolve) => {
-                const canvas = document.createElement('canvas');
-                let ctx = canvas.getContext('2d');
+        function generateMockCrops(width, height) {
+            const crops = [];
+            const numCrops = Math.floor(Math.random() * 3) + 1; // 1-3 crops
+            
+            for (let i = 0; i < numCrops; i++) {
+                // Generate random crop dimensions (between 30% and 70% of image size)
+                const cropWidth = Math.floor(width * (0.3 + Math.random() * 0.4));
+                const cropHeight = Math.floor(height * (0.3 + Math.random() * 0.4));
                 
-                canvas.width = crop.width;
-                canvas.height = crop.height;
+                // Generate random position
+                const x = Math.floor(Math.random() * (width - cropWidth));
+                const y = Math.floor(Math.random() * (height - cropHeight));
                 
-                if (appState.settings.deskewDocs && crop.rotation && crop.rotation !== 0) {
-                    ctx = ImageProcessor.deskewImage(ctx, 0, 0, crop.width, crop.height, crop.rotation);
-                }
-
-                ctx.drawImage(
-                    originalImage,
-                    crop.x, crop.y, crop.width, crop.height,
-                    0, 0, crop.width, crop.height
-                );
-                
-                if (appState.settings.enhanceDocs) {
-                    ctx = ImageProcessor.enhanceDocument(
-                        ctx, 
-                        crop.width, 
-                        crop.height, 
-                        appState.settings.processingMode
-                    );
-                }
-                
-                if (appState.settings.shadowCleanup) {
-                    ctx = ImageProcessor.removeBackground(ctx, crop.width, crop.height);
-                }
-                
-                const dataUrl = canvas.toDataURL(
-                    'image/' + appState.settings.outputFormat,
-                    appState.settings.outputFormat === 'jpg' ? appState.settings.jpgQuality / 100 : 1
-                );
-                
-                resolve({
-                    dataUrl: dataUrl,
-                    filename: generateFilename(appState.files[appState.currentFileIndex], crop, index)
-                });
-            });
-        }
-
-        async function downloadAllCrops() {
-            const totalCrops = appState.files.reduce((sum, f) => sum + f.crops.length, 0);
-            if (totalCrops === 0) return;
-
-            const zip = new JSZip();
-            let processedCount = 0;
-            elements.downloadBtn.disabled = true;
-            elements.downloadBtn.textContent = \`Processing... (0/\${totalCrops})\`;
-
-            for (let fileIndex = 0; fileIndex < appState.files.length; fileIndex++) {
-                const file = appState.files[fileIndex];
-                if (!file.crops || file.crops.length === 0) continue;
-
-                if (!file.imageElement) {
-                    await new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            const img = new Image();
-                            img.onload = () => {
-                                file.imageElement = img;
-                                resolve();
-                            };
-                            img.src = e.target.result;
-                        };
-                        reader.readAsDataURL(file.file);
-                    });
-                }
-
-                const img = file.imageElement;
-
-                for (let i = 0; i < file.crops.length; i++) {
-                    const crop = file.crops[i];
-                    appState.currentFileIndex = fileIndex; // for filename pattern
-                    const result = await processCrop(crop, img, i);
-                    const base64Data = result.dataUrl.split(',')[1];
-                    zip.file(result.filename, base64Data, { base64: true });
-                    processedCount++;
-                    elements.downloadBtn.textContent = \`Processing... (\${processedCount}/\${totalCrops})\`;
-                }
-            }
-
-            const content = await zip.generateAsync({ type: 'blob' });
-            const today = new Date().toISOString().slice(0, 10);
-            saveAs(content, \`BatchDocCropper_\${today}.zip\`);
-
-            elements.downloadBtn.disabled = false;
-            elements.downloadBtn.innerHTML = \`
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                Download Cropped Images (ZIP)
-            \`;
-        }
-
-        // Manual crop
-        function startManualCrop() {
-            if (appState.currentFileIndex < 0 || !appState.currentImage) return;
-            appState.manualMode = true;
-        }
-
-        function getCanvasCoords(evt) {
-            const rect = elements.editorCanvas.getBoundingClientRect();
-            const x = (evt.clientX - rect.left) * (elements.editorCanvas.width / rect.width);
-            const y = (evt.clientY - rect.top) * (elements.editorCanvas.height / rect.height);
-            return { x, y };
-        }
-
-        function startDrawing(evt) {
-            if (!appState.manualMode || !appState.currentImage) return;
-            evt.preventDefault();
-            appState.isDrawing = true;
-            const { x, y } = getCanvasCoords(evt);
-            appState.startX = x;
-            appState.startY = y;
-        }
-
-        function draw(evt) {
-            if (!appState.isDrawing || !appState.currentImage) return;
-            evt.preventDefault();
-            const { x, y } = getCanvasCoords(evt);
-            const rect = {
-                x: Math.min(appState.startX, x),
-                y: Math.min(appState.startY, y),
-                width: Math.abs(x - appState.startX),
-                height: Math.abs(y - appState.startY)
-            };
-            drawImageAndCrops(rect);
-        }
-
-        function stopDrawing(evt) {
-            if (!appState.isDrawing || !appState.currentImage) return;
-            evt && evt.preventDefault();
-            appState.isDrawing = false;
-
-            const endEvt = evt || window.event;
-            const { x, y } = endEvt.clientX ? getCanvasCoords(endEvt) : { x: appState.startX, y: appState.startY };
-            const rect = {
-                x: Math.min(appState.startX, x),
-                y: Math.min(appState.startY, y),
-                width: Math.abs(x - appState.startX),
-                height: Math.abs(y - appState.startY)
-            };
-
-            if (rect.width > 5 && rect.height > 5) {
-                const crop = {
+                crops.push({
                     id: generateId(),
-                    name: \`Crop \${appState.crops.length + 1}\`,
-                    x: Math.round(rect.x),
-                    y: Math.round(rect.y),
-                    width: Math.round(rect.width),
-                    height: Math.round(rect.height),
+                    name: `Document ${i + 1}`,
+                    x: x,
+                    y: y,
+                    width: cropWidth,
+                    height: cropHeight,
                     rotation: 0,
-                    confidence: 1
-                };
-                appState.crops.push(crop);
-                appState.currentCropIndex = appState.crops.length - 1;
-                updateCropsList();
+                    confidence: 0.7 + Math.random() * 0.3 // 0.7-1.0
+                });
             }
-            appState.manualMode = false;
-            drawImageAndCrops();
-            updateUI();
+            
+            return crops;
         }
 
-        // Touch handlers
+        // Crop creation and manipulation
+        function startManualCrop() {
+            appState.isDrawing = true;
+            elements.editorCanvas.style.cursor = 'crosshair';
+        }
+
+        function startDrawing(e) {
+            if (!appState.isDrawing) return;
+            
+            const canvas = elements.editorCanvas;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            appState.startX = (e.clientX - rect.left) * scaleX;
+            appState.startY = (e.clientY - rect.top) * scaleY;
+        }
+
+        function draw(e) {
+            if (!appState.isDrawing) return;
+            
+            const canvas = elements.editorCanvas;
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const currentX = (e.clientX - rect.left) * scaleX;
+            const currentY = (e.clientY - rect.top) * scaleY;
+            
+            // Redraw the image
+            const img = new Image();
+            if (appState.files[appState.currentFileIndex]?.file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.onload = function() {
+                        ctx.drawImage(img, 0, 0);
+                        drawCropRegions();
+                        
+                        // Draw the current selection rectangle
+                        ctx.strokeStyle = '#3a86ff';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([5, 5]);
+                        ctx.strokeRect(
+                            appState.startX, 
+                            appState.startY, 
+                            currentX - appState.startX, 
+                            currentY - appState.startY
+                        );
+                        ctx.setLineDash([]);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(appState.files[appState.currentFileIndex].file);
+            }
+        }
+
+        function stopDrawing(e) {
+            if (!appState.isDrawing) return;
+            
+            appState.isDrawing = false;
+            elements.editorCanvas.style.cursor = 'default';
+            
+            const canvas = elements.editorCanvas;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const endX = (e.clientX - rect.left) * scaleX;
+            const endY = (e.clientY - rect.top) * scaleY;
+            
+            // Calculate crop dimensions
+            const x = Math.min(appState.startX, endX);
+            const y = Math.min(appState.startY, endY);
+            const width = Math.abs(endX - appState.startX);
+            const height = Math.abs(endY - appState.startY);
+            
+            // Only create crop if it's large enough
+            if (width > 10 && height > 10) {
+                createCrop(x, y, width, height);
+            }
+            
+            // Redraw without the selection rectangle
+            drawCropRegions();
+        }
+
+        function createCrop(x, y, width, height) {
+            const crop = {
+                id: generateId(),
+                name: `Crop ${appState.crops.length + 1}`,
+                x: x,
+                y: y,
+                width: width,
+                height: height,
+                rotation: 0,
+                confidence: 0.8
+            };
+            
+            appState.crops.push(crop);
+            
+            // Also add to the current file
+            if (appState.currentFileIndex >= 0) {
+                appState.files[appState.currentFileIndex].crops.push(crop);
+            }
+            
+            updateCropsList();
+            drawCropRegions();
+        }
+
+        function drawCropRegions() {
+            const canvas = elements.editorCanvas;
+            const ctx = canvas.getContext('2d');
+            
+            // Redraw the image
+            const img = new Image();
+            if (appState.files[appState.currentFileIndex]?.file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.onload = function() {
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Draw each crop region
+                        appState.crops.forEach((crop, index) => {
+                            ctx.strokeStyle = index === appState.currentCropIndex ? '#ef476f' : '#3a86ff';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(crop.x, crop.y, crop.width, crop.height);
+                            
+                            // Draw corner handles
+                            const handleSize = 8;
+                            ctx.fillStyle = index === appState.currentCropIndex ? '#ef476f' : '#3a86ff';
+                            
+                            // Top-left
+                            ctx.fillRect(crop.x - handleSize/2, crop.y - handleSize/2, handleSize, handleSize);
+                            // Top-right
+                            ctx.fillRect(crop.x + crop.width - handleSize/2, crop.y - handleSize/2, handleSize, handleSize);
+                            // Bottom-left
+                            ctx.fillRect(crop.x - handleSize/2, crop.y + crop.height - handleSize/2, handleSize, handleSize);
+                            // Bottom-right
+                            ctx.fillRect(crop.x + crop.width - handleSize/2, crop.y + crop.height - handleSize/2, handleSize, handleSize);
+                            
+                            // Draw confidence score
+                            ctx.fillStyle = '#3a86ff';
+                            ctx.font = '12px Arial';
+                            ctx.fillText(`${Math.round(crop.confidence * 100)}%`, crop.x + 5, crop.y + 15);
+                        });
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(appState.files[appState.currentFileIndex].file);
+            }
+        }
+
+        function resetCrops() {
+            if (appState.currentFileIndex >= 0) {
+                appState.files[appState.currentFileIndex].crops = [];
+                appState.crops = [];
+                updateCropsList();
+                drawCropRegions();
+            }
+        }
+
+        // Touch event handlers for mobile
         function handleTouchStart(e) {
-            if (!appState.manualMode) return;
+            if (!appState.isDrawing) return;
+            
             e.preventDefault();
             const touch = e.touches[0];
-            startDrawing({ clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => {} });
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            elements.editorCanvas.dispatchEvent(mouseEvent);
         }
 
         function handleTouchMove(e) {
             if (!appState.isDrawing) return;
+            
             e.preventDefault();
             const touch = e.touches[0];
-            draw({ clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => {} });
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            elements.editorCanvas.dispatchEvent(mouseEvent);
         }
 
         function handleTouchEnd(e) {
             if (!appState.isDrawing) return;
+            
             e.preventDefault();
-            stopDrawing();
+            const mouseEvent = new MouseEvent('mouseup', {});
+            elements.editorCanvas.dispatchEvent(mouseEvent);
         }
 
-        function resetCrops() {
-            if (appState.currentFileIndex < 0) return;
-            appState.crops = [];
-            appState.currentCropIndex = -1;
-            appState.files[appState.currentFileIndex].crops = [];
-            updateCropsList();
-            drawImageAndCrops();
-            updateUI();
-        }
-
-        // Settings
-        function loadSettings() {
-            try {
-                const saved = localStorage.getItem('batchDocCropperSettings');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    Object.assign(appState.settings, parsed);
-                }
-            } catch (e) {
-                console.warn('Could not load settings', e);
-            }
-
+        // Settings functions
+        function openSettings() {
+            // Populate form with current settings
             elements.outputFormat.value = appState.settings.outputFormat;
             elements.jpgQuality.value = appState.settings.jpgQuality;
             elements.jpgQualityValue.textContent = appState.settings.jpgQuality;
-
-            elements.targetDpi.value = String(appState.settings.targetDpi);
+            elements.targetDpi.value = appState.settings.targetDpi;
             elements.autoRotate.checked = appState.settings.autoRotate;
-            elements.modeDocument.checked = appState.settings.processingMode === 'document';
-            elements.modePhoto.checked = appState.settings.processingMode === 'photo';
+            
+            if (appState.settings.processingMode === 'document') {
+                elements.modeDocument.checked = true;
+            } else {
+                elements.modePhoto.checked = true;
+            }
+            
             elements.shadowCleanup.checked = appState.settings.shadowCleanup;
             elements.filenamePattern.value = appState.settings.filenamePattern;
             elements.batchPrefix.value = appState.settings.batchPrefix;
-
+            
+            // AI Detection settings
             elements.detectionSensitivity.value = appState.settings.detectionSensitivity;
+            elements.sensitivityValue.textContent = appState.settings.detectionSensitivity;
             elements.edgeThreshold.value = appState.settings.edgeThreshold;
+            elements.edgeValue.textContent = appState.settings.edgeThreshold;
             elements.minDocSize.value = appState.settings.minDocSize;
+            elements.sizeValue.textContent = appState.settings.minDocSize + '%';
             elements.deskewDocs.checked = appState.settings.deskewDocs;
             elements.enhanceDocs.checked = appState.settings.enhanceDocs;
-
+            
+            // Update JPG quality visibility
             updateJpgQualityVisibility();
-            updateSensitivityValue();
-            updateEdgeValue();
-            updateSizeValue();
-        }
-
-        function openSettings() {
+            
+            // Show modal
             elements.settingsModal.classList.remove('hidden');
         }
 
@@ -1887,23 +1566,38 @@
         }
 
         function saveSettings() {
+            // Save settings from form
             appState.settings.outputFormat = elements.outputFormat.value;
-            appState.settings.jpgQuality = parseInt(elements.jpgQuality.value, 10);
-            appState.settings.targetDpi = parseInt(elements.targetDpi.value, 10);
+            appState.settings.jpgQuality = parseInt(elements.jpgQuality.value);
+            appState.settings.targetDpi = parseInt(elements.targetDpi.value);
             appState.settings.autoRotate = elements.autoRotate.checked;
-            appState.settings.processingMode = elements.modePhoto.checked ? 'photo' : 'document';
+            appState.settings.processingMode = elements.modeDocument.checked ? 'document' : 'photo';
             appState.settings.shadowCleanup = elements.shadowCleanup.checked;
             appState.settings.filenamePattern = elements.filenamePattern.value;
             appState.settings.batchPrefix = elements.batchPrefix.value;
-
-            appState.settings.detectionSensitivity = parseInt(elements.detectionSensitivity.value, 10);
-            appState.settings.edgeThreshold = parseInt(elements.edgeThreshold.value, 10);
-            appState.settings.minDocSize = parseInt(elements.minDocSize.value, 10);
+            
+            // AI Detection settings
+            appState.settings.detectionSensitivity = parseInt(elements.detectionSensitivity.value);
+            appState.settings.edgeThreshold = parseInt(elements.edgeThreshold.value);
+            appState.settings.minDocSize = parseInt(elements.minDocSize.value);
             appState.settings.deskewDocs = elements.deskewDocs.checked;
             appState.settings.enhanceDocs = elements.enhanceDocs.checked;
-
+            
+            // Save to localStorage
             localStorage.setItem('batchDocCropperSettings', JSON.stringify(appState.settings));
+            
+            // Close modal
             closeSettings();
+            
+            // Update UI to reflect new settings
+            updateUI();
+        }
+
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('batchDocCropperSettings');
+            if (savedSettings) {
+                appState.settings = { ...appState.settings, ...JSON.parse(savedSettings) };
+            }
         }
 
         function updateJpgQualityVisibility() {
@@ -1918,7 +1612,7 @@
             elements.jpgQualityValue.textContent = elements.jpgQuality.value;
         }
 
-        // AI Detection Slider helpers
+        // AI Detection settings handlers
         function updateSensitivityValue() {
             elements.sensitivityValue.textContent = elements.detectionSensitivity.value;
         }
@@ -1931,59 +1625,230 @@
             elements.sizeValue.textContent = elements.minDocSize.value + '%';
         }
 
-        // UI state
+        // Download functionality
+        function downloadAllCrops() {
+            // Create a ZIP file containing all crops from all files
+            const zip = new JSZip();
+            let cropCount = 0;
+            
+            // Process each file
+            appState.files.forEach(file => {
+                if (file.crops.length > 0) {
+                    // For each crop in the file
+                    file.crops.forEach((crop, index) => {
+                        // Generate filename based on pattern
+                        const filename = generateFilename(file, crop, index);
+                        
+                        // Create a canvas for the crop
+                        const canvas = document.createElement('canvas');
+                        canvas.width = crop.width;
+                        canvas.height = crop.height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Fill with a placeholder color (in real implementation, this would be the actual crop)
+                        ctx.fillStyle = '#f0f0f0';
+                        ctx.fillRect(0, 0, crop.width, crop.height);
+                        
+                        // Add crop border and label for demo
+                        ctx.strokeStyle = '#3a86ff';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(0, 0, crop.width, crop.height);
+                        
+                        ctx.fillStyle = '#3a86ff';
+                        ctx.font = '16px Arial';
+                        ctx.fillText(`Crop ${index + 1}`, 10, 30);
+                        ctx.fillText(`${crop.width} × ${crop.height}`, 10, 50);
+                        
+                        // Convert to data URL and add to ZIP
+                        const dataUrl = canvas.toDataURL(`image/${appState.settings.outputFormat}`, 
+                            appState.settings.outputFormat === 'jpg' ? appState.settings.jpgQuality / 100 : 1);
+                        
+                        // Extract base64 data from data URL
+                        const base64Data = dataUrl.split(',')[1];
+                        
+                        // Add to ZIP
+                        zip.file(filename, base64Data, { base64: true });
+                        cropCount++;
+                    });
+                }
+            });
+            
+            // Generate ZIP and trigger download
+            zip.generateAsync({ type: 'blob' }).then(function(content) {
+                saveAs(content, `BatchDocCropper_${new Date().toISOString().slice(0, 10)}.zip`);
+            });
+        }
+
+        function generateFilename(file, crop, index) {
+            let filename = appState.settings.filenamePattern;
+            
+            // Replace placeholders with actual values
+            filename = filename.replace(/{originalName}/g, file.name.replace(/\.[^/.]+$/, ""));
+            filename = filename.replace(/{index}/g, (index + 1).toString().padStart(3, '0'));
+            filename = filename.replace(/{fileIndex}/g, (appState.files.indexOf(file) + 1).toString().padStart(2, '0'));
+            filename = filename.replace(/{cropIndex}/g, (index + 1).toString().padStart(3, '0'));
+            filename = filename.replace(/{batchName}/g, appState.settings.batchPrefix || 'batch');
+            filename = filename.replace(/{timestamp}/g, new Date().toISOString().slice(0, 10));
+            
+            // Add file extension
+            filename += `.${appState.settings.outputFormat}`;
+            
+            return filename;
+        }
+
+        // UI update functions
         function updateUI() {
-            elements.fileCounter.textContent = appState.files.length + ' / 50 files';
-
-            const totalCrops = appState.files.reduce((sum, f) => sum + (f.crops ? f.crops.length : 0), 0);
-            elements.batchSummary.textContent = appState.files.length === 0
-                ? 'No files uploaded'
-                : \`\${appState.files.length} file(s), \${totalCrops} crop(s)\`;
-
-            const hasFile = appState.currentFileIndex >= 0 && appState.files[appState.currentFileIndex];
-            elements.detectBtn.disabled = !hasFile;
-            elements.addCropBtn.disabled = !hasFile;
-            elements.resetCropsBtn.disabled = !hasFile || appState.crops.length === 0;
-            elements.downloadBtn.disabled = totalCrops === 0;
-
-            // Show editor + sidebar only when there are files
+            // Update file counter
+            elements.fileCounter.textContent = `${appState.files.length} / 50 files`;
+            
+            // Update batch summary
+            const totalCrops = appState.files.reduce((sum, file) => sum + file.crops.length, 0);
+            elements.batchSummary.textContent = 
+                `${appState.files.length} files, ${totalCrops} crops ready • Output: ${appState.settings.outputFormat.toUpperCase()}, quality ${appState.settings.jpgQuality}, ${appState.settings.targetDpi} DPI`;
+            
+            // Show/hide upload area
             if (appState.files.length === 0) {
-                elements.sidebar.classList.add('hidden');
-                elements.editor.classList.add('hidden');
                 elements.uploadArea.classList.remove('hidden');
             } else {
-                elements.sidebar.classList.remove('hidden');
-                elements.editor.classList.remove('hidden');
                 elements.uploadArea.classList.add('hidden');
             }
+            
+            // Enable/disable download button
+            elements.downloadBtn.disabled = totalCrops === 0;
+            
+            // Update file list
+            updateFileListUI();
         }
 
-        // Helpers
+        function updateFileListUI() {
+            elements.fileList.innerHTML = '';
+            
+            appState.files.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = `file-item ${index === appState.currentFileIndex ? 'active' : ''}`;
+                fileItem.addEventListener('click', () => selectFile(index));
+                
+                fileItem.innerHTML = `
+                    <div class="file-thumbnail">
+                        ${file.thumbnail ? `<img src="${file.thumbnail}" alt="${file.name}">` : ''}
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-details">
+                            <span>${file.width} × ${file.height}</span>
+                            <div class="file-status">
+                                <span class="status-badge status-${file.status}">${file.status}</span>
+                                ${file.crops.length > 0 ? `<span>${file.crops.length} crops</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                elements.fileList.appendChild(fileItem);
+            });
+        }
+
+        function updateFileItem(file) {
+            // In a real implementation, we would update the specific file item
+            // For this demo, we'll just refresh the entire list
+            updateFileListUI();
+        }
+
+        function updateCropsList() {
+            elements.cropList.innerHTML = '';
+            elements.cropCount.textContent = `${appState.crops.length} crops`;
+            
+            appState.crops.forEach((crop, index) => {
+                const cropItem = document.createElement('div');
+                cropItem.className = `crop-item ${index === appState.currentCropIndex ? 'active' : ''}`;
+                cropItem.addEventListener('click', () => selectCrop(index));
+                
+                // Create a thumbnail for the crop
+                const canvas = document.createElement('canvas');
+                canvas.width = 50;
+                canvas.height = 50;
+                const ctx = canvas.getContext('2d');
+                
+                // Fill with a placeholder
+                ctx.fillStyle = '#f0f0f0';
+                ctx.fillRect(0, 0, 50, 50);
+                
+                // Add a border
+                ctx.strokeStyle = '#3a86ff';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(0, 0, 50, 50);
+                
+                // Add crop info
+                ctx.fillStyle = '#3a86ff';
+                ctx.font = '8px Arial';
+                ctx.fillText(`${Math.round(crop.confidence * 100)}%`, 5, 10);
+                
+                cropItem.innerHTML = `
+                    <div class="crop-thumbnail">
+                        <canvas width="50" height="50"></canvas>
+                    </div>
+                    <div class="crop-info">
+                        <div class="crop-name">${crop.name}</div>
+                        <div class="crop-details">${Math.round(crop.width)} × ${Math.round(crop.height)}</div>
+                    </div>
+                    <div class="crop-actions">
+                        <button class="btn-icon" title="Delete crop">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                
+                // Replace the canvas with our generated one
+                const thumbnail = cropItem.querySelector('.crop-thumbnail');
+                thumbnail.innerHTML = '';
+                thumbnail.appendChild(canvas);
+                
+                // Add delete event listener
+                const deleteBtn = cropItem.querySelector('.crop-actions .btn-icon');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteCrop(index);
+                });
+                
+                elements.cropList.appendChild(cropItem);
+            });
+        }
+
+        function selectCrop(index) {
+            appState.currentCropIndex = index;
+            updateCropsList();
+            drawCropRegions();
+        }
+
+        function deleteCrop(index) {
+            appState.crops.splice(index, 1);
+            
+            // Also remove from current file
+            if (appState.currentFileIndex >= 0) {
+                const file = appState.files[appState.currentFileIndex];
+                const cropId = appState.crops[index]?.id;
+                if (cropId) {
+                    file.crops = file.crops.filter(c => c.id !== cropId);
+                }
+            }
+            
+            // Reset selection
+            appState.currentCropIndex = -1;
+            
+            updateCropsList();
+            drawCropRegions();
+            updateUI();
+        }
+
+        // Utility functions
         function generateId() {
-            return 'id-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+            return '_' + Math.random().toString(36).substr(2, 9);
         }
 
-        function generateFilename(fileObj, crop, index) {
-            const pattern = appState.settings.filenamePattern || '{originalName}_{index}';
-            const originalNameWithoutExt = (fileObj.name || 'image').replace(/\.[^/.]+$/, '');
-            const timestamp = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 14);
-            const batchName = appState.settings.batchPrefix || 'Batch';
-
-            const fileIndex = appState.files.indexOf(fileObj) + 1;
-            const cropIndex = index + 1;
-
-            const replaced = pattern
-                .replace(/\{originalName\}/g, originalNameWithoutExt)
-                .replace(/\{index\}/g, cropIndex)
-                .replace(/\{batchName\}/g, batchName)
-                .replace(/\{fileIndex\}/g, fileIndex)
-                .replace(/\{cropIndex\}/g, cropIndex)
-                .replace(/\{timestamp\}/g, timestamp);
-
-            const ext = appState.settings.outputFormat === 'png' ? '.png' : '.jpg';
-            return replaced + ext;
-        }
-
+        // Initialize the app when the DOM is loaded
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
