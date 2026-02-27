@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIRDS TRIP</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root { --accent: #ffd700; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0d0d1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Press Start 2P', monospace;
+  overflow: hidden;
+}
+
+#game-wrapper {
+  position: relative;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+#title-bar {
+  text-align: center;
+  padding: 8px 0 5px;
+  letter-spacing: 5px;
+  font-size: 16px;
+  background: linear-gradient(90deg, #ff6b35, #ffd700, #a78bfa, #ff6b35);
+  background-size: 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: titleShimmer 3s linear infinite;
+  filter: drop-shadow(0 0 10px #ffd700aa);
+}
+@keyframes titleShimmer { 0%{background-position:0%} 100%{background-position:200%} }
+
+#scoreboard {
+  background: rgba(0,0,0,0.8);
+  border: 3px solid var(--accent);
+  border-bottom: none;
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--accent);
+  font-size: 9px;
+  transition: border-color 0.5s;
+}
+#scoreboard span { color: #fff; font-size: 11px; }
+#bird-icon-sb { font-size: 16px; cursor: pointer; transition: transform 0.2s; }
+#bird-icon-sb:hover { transform: scale(1.3); }
+
+canvas {
+  display: block;
+  border: 3px solid var(--accent);
+  border-top: none;
+  border-bottom: none;
+  cursor: pointer;
+  transition: border-color 0.5s;
+}
+
+#credits {
+  background: rgba(0,0,0,0.8);
+  border: 3px solid var(--accent);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 6px 16px;
+  text-align: center;
+  font-size: 7px;
+  color: #555;
+  transition: border-color 0.5s;
+  letter-spacing: 2px;
+}
+#credits span { color: var(--accent); }
+
+#theme-label {
+  position: absolute;
+  top: 106px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #000;
+  font-size: 7px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity 0.4s;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+}
+#theme-label.show { opacity: 1; }
+
+#unlock-toast {
+  position: absolute;
+  top: 132px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: #fff;
+  font-size: 7px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 2px solid #c084fc;
+  opacity: 0;
+  transition: opacity 0.4s;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 21;
+  text-align: center;
+  line-height: 2;
+}
+#unlock-toast.show { opacity: 1; }
+
+#overlay {
+  position: absolute;
+  top: 48px; left: 0; right: 0; bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-align: center;
+  z-index: 15;
+  pointer-events: all;
+  background: rgba(0,0,0,0.35);
+}
+#overlay h1 {
+  font-size: 22px;
+  color: var(--accent);
+  text-shadow: 3px 3px 0 #000;
+  margin-bottom: 14px;
+  line-height: 1.6;
+  filter: drop-shadow(0 0 12px var(--accent));
+}
+#overlay p { font-size: 8px; color: #ccc; line-height: 2.2; }
+#overlay.hidden { display: none; }
+
+/* BIRD SELECT */
+#bird-select {
+  position: absolute;
+  top: 48px; left: 0; right: 0; bottom: 28px;
+  background: rgba(5,5,20,0.97);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 10px 10px;
+  z-index: 30;
+  overflow-y: auto;
+}
+#bird-select.hidden { display: none; }
+#bird-select h2 {
+  font-size: 11px;
+  color: var(--accent);
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 8px var(--accent));
+}
+#birds-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+.bird-card {
+  background: rgba(255,255,255,0.04);
+  border: 2px solid #2a2a3a;
+  border-radius: 10px;
+  padding: 8px 4px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.bird-card.unlocked:hover { border-color: var(--accent); background: rgba(255,215,0,0.07); transform: scale(1.05); }
+.bird-card.selected { border-color: var(--accent); background: rgba(255,215,0,0.12); box-shadow: 0 0 14px var(--accent)55; }
+.bird-card.locked { opacity: 0.4; cursor: not-allowed; }
+.bird-card .bname { font-size: 5.5px; color: #aaa; margin-top: 4px; line-height: 1.7; }
+.bird-card .breq { font-size: 5px; color: #f97316; margin-top: 2px; }
+.bird-card .sbadge { position: absolute; top: 3px; right: 3px; background: var(--accent); color: #000; font-size: 5px; padding: 2px 4px; border-radius: 4px; }
+.bird-card .licon { position: absolute; top: 3px; right: 3px; font-size: 10px; }
+
+#close-select {
+  width: 100%;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.1s, filter 0.2s;
+  flex-shrink: 0;
+}
+#close-select:hover { transform: scale(1.03); filter: brightness(1.1); }
+</style>
+</head>
+<body>
+<div id="game-wrapper">
+  <div id="title-bar">✦ BIRDS TRIP ✦</div>
+  <div id="scoreboard">
+    <div>SCORE: <span id="score">0</span></div>
+    <div id="bird-icon-sb" title="Press B or click to change bird">🐦</div>
+    <div>BEST: <span id="best">0</span></div>
+    <div id="theme-name">🌤 DAY</div>
+  </div>
+  <div id="theme-label"></div>
+  <div id="unlock-toast"></div>
+  <canvas id="canvas" width="400" height="516"></canvas>
+  <div id="credits">DEVELOPED BY <span>ANANT</span></div>
+
+  <div id="overlay">
+    <h1>BIRDS<br>TRIP</h1>
+    <p>CLICK or SPACE to flap<br><br>
+    🏆 Unlock birds at 10 · 15 · 20 · 30 · 40<br><br>
+    Click 🐦 above to change bird</p>
+  </div>
+
+  <div id="bird-select" class="hidden">
+    <h2>🐦 SELECT YOUR BIRD</h2>
+    <div id="birds-grid"></div>
+    <button id="close-select">▶ FLY WITH THIS BIRD!</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const bestEl = document.getElementById('best');
+const themeNameEl = document.getElementById('theme-name');
+const themeLabelEl = document.getElementById('theme-label');
+const unlockToast = document.getElementById('unlock-toast');
+const overlay = document.getElementById('overlay');
+const scoreboard = document.getElementById('scoreboard');
+const birdSelectScreen = document.getElementById('bird-select');
+const birdsGrid = document.getElementById('birds-grid');
+const closeSelectBtn = document.getElementById('close-select');
+const birdIconSb = document.getElementById('bird-icon-sb');
+
+// ═══════════════════════════════════════════════════════════════════
+// BIRD TYPES - 6 unique shapes + sizes
+// ═══════════════════════════════════════════════════════════════════
+const BIRD_TYPES = [
+  {
+    id:0, name:"SPARROW", emoji:"🐦", unlockScore:0,
+    desc:"Starter Bird\nBalanced",
+    hitW:28, hitH:24,
+    draw(ctx, flap, angle, hl) {
+      const c = hl;
+      ctx.save(); ctx.rotate(angle*Math.PI/180);
+      ctx.shadowColor=c.glow; ctx.shadowBlur=16;
+      ctx.fillStyle=c.body; ctx.beginPath(); ctx.ellipse(0,0,18,14,0,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+      // wing
+      const fa=Math.sin(flap)*0.5;
+      ctx.fillStyle=c.wing; ctx.save(); ctx.rotate(fa);
+      ctx.beginPath(); ctx.ellipse(-4,2,10,6,-0.3,0,Math.PI*2); ctx.fill(); ctx.restore();
+      // tail
+      ctx.fillStyle=c.wing; ctx.beginPath(); ctx.moveTo(-16,0); ctx.lineTo(-24,-5); ctx.lineTo(-20,2); ctx.lineTo(-24,7); ctx.closePath(); ctx.fill();
+      // eye white
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(8,-4,6,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=c.eye; ctx.beginPath(); ctx.arc(9,-4,3,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(10,-5,1,0,Math.PI*2); ctx.fill();
+      // beak
+      ctx.fillStyle=c.beak; ctx.beginPath(); ctx.moveTo(15,-2); ctx.lineTo(22,0); ctx.lineTo(15,4); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  },
+  {
+    id:1, name:"FAT OWL", emoji:"🦉", unlockScore:10,
+    desc:"Chubby & Wise\nBIG body",
+    hitW:44, hitH:40,
+    draw(ctx, flap, angle, hl) {
+      const c = hl;
+      ctx.save(); ctx.rotate(angle*Math.PI/180);
+      ctx.shadowColor=c.glow; ctx.shadowBlur=20;
+      ctx.fillStyle=c.body; ctx.beginPath(); ctx.ellipse(0,0,24,22,0,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.fillStyle='rgba(255,255,255,0.18)'; ctx.beginPath(); ctx.ellipse(2,5,13,11,0,0,Math.PI*2); ctx.fill();
+      // wings both sides
+      const fa=Math.sin(flap)*0.6;
+      ctx.fillStyle=c.wing;
+      ctx.save(); ctx.rotate(fa); ctx.beginPath(); ctx.ellipse(-10,4,16,8,-0.4,0,Math.PI*2); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.rotate(-fa*0.4); ctx.beginPath(); ctx.ellipse(10,4,16,8,0.4,0,Math.PI*2); ctx.fill(); ctx.restore();
+      // big owl eyes
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(-8,-6,9,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(8,-6,9,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=c.eye; ctx.beginPath(); ctx.arc(-8,-6,5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=c.eye; ctx.beginPath(); ctx.arc(8,-6,5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(-7,-7,2,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(9,-7,2,0,Math.PI*2); ctx.fill();
+      // beak hooked
+      ctx.fillStyle=c.beak; ctx.beginPath(); ctx.moveTo(-3,0); ctx.lineTo(3,0); ctx.lineTo(1,7); ctx.closePath(); ctx.fill();
+      // ear tufts
+      ctx.fillStyle=c.wing;
+      ctx.beginPath(); ctx.moveTo(-10,-20); ctx.lineTo(-7,-12); ctx.lineTo(-14,-13); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(10,-20); ctx.lineTo(7,-12); ctx.lineTo(14,-13); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  },
+  {
+    id:2, name:"TINY SWIFT", emoji:"⚡", unlockScore:15,
+    desc:"Super Fast\nSmall & Agile",
+    hitW:18, hitH:12,
+    draw(ctx, flap, angle, hl) {
+      const c = hl;
+      ctx.save(); ctx.rotate(angle*Math.PI/180);
+      ctx.shadowColor=c.glow; ctx.shadowBlur=22;
+      // speed trail
+      const tr=ctx.createLinearGradient(-14,0,12,0);
+      tr.addColorStop(0,c.glow+'00'); tr.addColorStop(1,c.glow+'66');
+      ctx.fillStyle=tr; ctx.beginPath(); ctx.ellipse(0,0,14,5,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=c.body; ctx.beginPath(); ctx.ellipse(0,0,12,8,0,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+      const fa=Math.sin(flap)*0.9;
+      ctx.fillStyle=c.wing;
+      ctx.save(); ctx.rotate(fa);
+      ctx.beginPath(); ctx.moveTo(-2,0); ctx.lineTo(-20,-13); ctx.lineTo(-18,2); ctx.closePath(); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.rotate(-fa*0.5);
+      ctx.beginPath(); ctx.moveTo(-2,0); ctx.lineTo(-20,11); ctx.lineTo(-18,0); ctx.closePath(); ctx.fill(); ctx.restore();
+      ctx.fillStyle=c.eye; ctx.beginPath(); ctx.arc(6,-2,3,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(7,-2,1.5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=c.beak; ctx.beginPath(); ctx.moveTo(10,-1); ctx.lineTo(17,0); ctx.lineTo(10,2); ctx.closePath(); ctx.fill();
+      // forked tail
+      ctx.fillStyle=c.wing;
+      ctx.beginPath(); ctx.moveTo(-10,0); ctx.lineTo(-18,-7); ctx.lineTo(-14,0); ctx.lineTo(-18,7); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  },
+  {
+    id:3, name:"DRAGON BIRD", emoji:"🐉", unlockScore:20,
+    desc:"Fire Breather\nMassive Wings",
+    hitW:38, hitH:28,
+    draw(ctx, flap, angle, hl) {
+      const c = hl;
+      ctx.save(); ctx.rotate(angle*Math.PI/180);
+      ctx.shadowColor=c.glow; ctx.shadowBlur=24;
+      ctx.fillStyle=c.body; ctx.beginPath(); ctx.ellipse(0,0,22,16,0,0,Math.PI*2); ctx.fill();
+      // scale texture
+      ctx.fillStyle='rgba(255,120,0,0.18)';
+      for(let i=-2;i<=2;i++) for(let j=-1;j<=1;j++){ctx.beginPath();ctx.arc(i*7,j*6,4,0,Math.PI*2);ctx.fill();}
+      ctx.shadowBlur=0;
+      const fa=Math.sin(flap)*0.7;
+      ctx.fillStyle=c.wing;
+      ctx.save(); ctx.rotate(fa);
+      ctx.beginPath(); ctx.moveTo(0,-4); ctx.bezierCurveTo(-10,-20,-26,-20,-28,-8); ctx.bezierCurveTo(-20,-2,-12,2,0,4); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-28,-8); ctx.stroke();
+      ctx.restore();
+      ctx.save(); ctx.rotate(-fa);
+      ctx.beginPath(); ctx.moveTo(0,-4); ctx.bezierCurveTo(10,-20,26,-20,28,-8); ctx.bezierCurveTo(20,-2,12,2,0,4); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      // glowing eyes
+      ctx.shadowColor='#ff4400'; ctx.shadowBlur=10;
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(-6,-3,6,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(6,-3,6,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=c.eye; ctx.beginPath(); ctx.arc(-5,-4,3,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=c.eye; ctx.beginPath(); ctx.arc(7,-4,3,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.fillStyle=c.beak; ctx.beginPath(); ctx.moveTo(18,-4); ctx.lineTo(26,0); ctx.lineTo(18,4); ctx.closePath(); ctx.fill();
+      ctx.font='11px sans-serif'; ctx.fillText('🔥',22,5);
+      // horns
+      ctx.fillStyle=c.beak;
+      ctx.beginPath(); ctx.moveTo(-8,-16); ctx.lineTo(-4,-10); ctx.lineTo(-12,-10); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(8,-16); ctx.lineTo(4,-10); ctx.lineTo(12,-10); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  },
+  {
+    id:4, name:"ICE PHOENIX", emoji:"🌟", unlockScore:30,
+    desc:"Legendary Bird\nFreezes All",
+    hitW:36, hitH:28,
+    draw(ctx, flap, angle, hl) {
+      const c = hl;
+      ctx.save(); ctx.rotate(angle*Math.PI/180);
+      ctx.shadowColor=c.glow; ctx.shadowBlur=28;
+      // aura
+      ctx.fillStyle=c.glow+'33'; ctx.beginPath(); ctx.ellipse(0,0,26,20,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=c.body; ctx.beginPath(); ctx.ellipse(0,0,20,15,0,0,Math.PI*2); ctx.fill();
+      // crystal spikes
+      ctx.strokeStyle=c.glow; ctx.lineWidth=1.5;
+      for(let i=0;i<6;i++){
+        const a=(i/6)*Math.PI*2+flap*0.08;
+        ctx.save(); ctx.rotate(a);
+        ctx.beginPath(); ctx.moveTo(12,0); ctx.lineTo(24,0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(17,-3); ctx.lineTo(17,3); ctx.stroke();
+        ctx.restore();
+      }
+      ctx.shadowBlur=0;
+      const fa=Math.sin(flap)*0.5;
+      ctx.fillStyle=c.wing;
+      ctx.save(); ctx.rotate(fa);
+      [-8,0,8].forEach(off=>{
+        ctx.beginPath(); ctx.moveTo(-14,off); ctx.quadraticCurveTo(-32,off-10,-40,off-5); ctx.quadraticCurveTo(-32,off+5,-14,off+4); ctx.closePath(); ctx.fill();
+      });
+      ctx.restore();
+      // feathered wings
+      const wg=ctx.createLinearGradient(0,-22,0,10);
+      wg.addColorStop(0,c.glow); wg.addColorStop(1,c.wing+'66');
+      ctx.save(); ctx.rotate(fa*0.8);
+      ctx.fillStyle=wg; ctx.beginPath(); ctx.moveTo(0,-6); ctx.bezierCurveTo(0,-26,20,-24,18,-8); ctx.bezierCurveTo(12,-4,6,0,0,6); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.save(); ctx.rotate(-fa*0.8);
+      ctx.fillStyle=wg; ctx.beginPath(); ctx.moveTo(0,-6); ctx.bezierCurveTo(0,-26,-20,-24,-18,-8); ctx.bezierCurveTo(-12,-4,-6,0,0,6); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.shadowColor=c.glow; ctx.shadowBlur=12;
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(9,-3,7,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=c.eye; ctx.beginPath(); ctx.arc(10,-3,4,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(11,-4,1.5,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.fillStyle=c.beak; ctx.strokeStyle=c.glow; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(16,-3); ctx.lineTo(25,0); ctx.lineTo(16,3); ctx.closePath(); ctx.fill(); ctx.stroke();
+      // crown feathers
+      ctx.fillStyle=c.glow;
+      [-10,0,10].forEach(x=>{ ctx.beginPath(); ctx.moveTo(x,-18); ctx.lineTo(x-4,-10); ctx.lineTo(x+4,-10); ctx.closePath(); ctx.fill(); });
+      ctx.restore();
+    }
+  },
+  {
+    id:5, name:"GALAXY BIRD", emoji:"🌌", unlockScore:40,
+    desc:"ULTRA RARE!\nBorn In Stars",
+    hitW:36, hitH:28,
+    draw(ctx, flap, angle, hl) {
+      const c = hl;
+      ctx.save(); ctx.rotate(angle*Math.PI/180);
+      ctx.shadowColor=c.glow; ctx.shadowBlur=32;
+      // orbital rings
+      for(let r=28;r>=16;r-=4){
+        ctx.strokeStyle=c.glow+Math.floor((30-r)*12).toString(16).padStart(2,'0');
+        ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.ellipse(0,0,r,r*0.65,flap*0.04,0,Math.PI*2); ctx.stroke();
+      }
+      const bg=ctx.createRadialGradient(0,0,2,0,0,20);
+      bg.addColorStop(0,c.glow); bg.addColorStop(0.5,c.body); bg.addColorStop(1,'#000');
+      ctx.fillStyle=bg; ctx.beginPath(); ctx.ellipse(0,0,20,16,0,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+      // star sparkles
+      [[4,4],[8,-6],[-6,2],[-2,-8],[10,2],[-8,-4]].forEach(([sx,sy])=>{
+        ctx.globalAlpha=Math.abs(Math.sin(flap*0.5+sx));
+        ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(sx,sy,1.5,0,Math.PI*2); ctx.fill();
+      });
+      ctx.globalAlpha=1;
+      const fa=Math.sin(flap)*0.6;
+      const cwg=ctx.createLinearGradient(0,-18,0,8);
+      cwg.addColorStop(0,'#818cf8'); cwg.addColorStop(0.5,c.wing); cwg.addColorStop(1,c.body+'00');
+      ctx.save(); ctx.rotate(fa);
+      ctx.fillStyle=cwg; ctx.beginPath(); ctx.moveTo(0,-4); ctx.bezierCurveTo(-5,-22,-22,-18,-24,-6); ctx.bezierCurveTo(-18,0,-10,4,0,4); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.save(); ctx.rotate(-fa);
+      ctx.fillStyle=cwg; ctx.beginPath(); ctx.moveTo(0,-4); ctx.bezierCurveTo(5,-22,22,-18,24,-6); ctx.bezierCurveTo(18,0,10,4,0,4); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      // nebula tail
+      ctx.fillStyle=c.glow+'44'; ctx.beginPath(); ctx.moveTo(-18,-2); ctx.quadraticCurveTo(-30,0,-36,6); ctx.quadraticCurveTo(-28,2,-18,4); ctx.closePath(); ctx.fill();
+      ctx.shadowColor=c.glow; ctx.shadowBlur=14;
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(8,-3,7,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=c.glow; ctx.beginPath(); ctx.arc(9,-3,4,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(10,-4,2,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(11,-5,1,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.fillStyle=c.beak; ctx.beginPath(); ctx.moveTo(16,-3); ctx.lineTo(24,0); ctx.lineTo(16,3); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// THEMES - birdHighlight makes bird contrast clearly with bg
+// ═══════════════════════════════════════════════════════════════════
+const THEMES = [
+  {
+    name:"🌤 DAY", label:"☀️ DAYTIME VIBES", accent:"#ffd700",
+    sky:["#5CC8FF","#87CEEB"], ground:"#8B6914", grass:"#5D8A3C",
+    pipe:"#3a9e3a", pipeBorder:"#2d7a2d",
+    birdHL:{ body:"#FF4500", wing:"#C62828", eye:"#fff", beak:"#FFD600", glow:"#FF6D00" },
+    stars:false, clouds:true, lava:false
+  },
+  {
+    name:"🌆 SUNSET", label:"🌅 SUNSET MODE", accent:"#ff6b35",
+    sky:["#ff2200","#ff7043"], ground:"#5c3a1a", grass:"#8B4513",
+    pipe:"#8b0000", pipeBorder:"#550000",
+    birdHL:{ body:"#F0F4C3", wing:"#DCE775", eye:"#000", beak:"#FFCA28", glow:"#F9FBE7" },
+    stars:false, clouds:true, lava:false
+  },
+  {
+    name:"🌙 NIGHT", label:"🌙 NIGHT SHIFT", accent:"#a78bfa",
+    sky:["#050510","#0d0d2e"], ground:"#0a0a1a", grass:"#0d0d24",
+    pipe:"#4a1d96", pipeBorder:"#6d28d9",
+    birdHL:{ body:"#FFEB3B", wing:"#F57F17", eye:"#000", beak:"#FF6F00", glow:"#FFD740" },
+    stars:true, clouds:false, lava:false
+  },
+  {
+    name:"❄️ ARCTIC", label:"❄️ ICE WORLD", accent:"#7dd3fc",
+    sky:["#e0f2fe","#f0f9ff"], ground:"#93c5fd", grass:"#dbeafe",
+    pipe:"#0369a1", pipeBorder:"#0284c7",
+    birdHL:{ body:"#E53935", wing:"#B71C1C", eye:"#fff", beak:"#FF8F00", glow:"#EF5350" },
+    stars:false, clouds:true, lava:false
+  },
+  {
+    name:"🌋 VOLCANO", label:"🌋 LAVA ZONE", accent:"#f97316",
+    sky:["#5c0000","#7f1d1d"], ground:"#3c0000", grass:"#6b1a1a",
+    pipe:"#b91c1c", pipeBorder:"#dc2626",
+    birdHL:{ body:"#E1F5FE", wing:"#81D4FA", eye:"#000", beak:"#FFF9C4", glow:"#B3E5FC" },
+    stars:false, clouds:false, lava:true
+  },
+  {
+    name:"🌊 OCEAN", label:"🌊 DEEP BLUE", accent:"#06b6d4",
+    sky:["#082035","#0c4a6e"], ground:"#082035", grass:"#0e4d6e",
+    pipe:"#0891b2", pipeBorder:"#0e7490",
+    birdHL:{ body:"#FFD54F", wing:"#FF8F00", eye:"#000", beak:"#FF6F00", glow:"#FFE082" },
+    stars:true, clouds:false, lava:false
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+let birdPhys, pipes, score, best, gameRunning, gameOver, theme, frameCount, particles;
+let selectedBirdId = 0;
+let unlockedBirds = new Set([0]);
+let showingBirdSelect = false;
+
+best = parseInt(localStorage.getItem('flappyBest') || '0');
+const savedUL = localStorage.getItem('flappyUnlocked');
+if (savedUL) savedUL.split(',').forEach(id => unlockedBirds.add(parseInt(id)));
+selectedBirdId = parseInt(localStorage.getItem('flappySelectedBird') || '0');
+if (!unlockedBirds.has(selectedBirdId)) selectedBirdId = 0;
+bestEl.textContent = best;
+
+const GRAVITY=0.5, JUMP=-9, PIPE_W=60, PIPE_GAP=162, PIPE_SPD=2.5, BIRD_X=90;
+let stars=[], clouds=[], lavaBubbles=[];
+
+function makeStars(){ stars=Array.from({length:80},()=>({x:Math.random()*400,y:Math.random()*400,r:Math.random()*2,a:Math.random()})); }
+function makeClouds(){ clouds=Array.from({length:5},(_,i)=>({x:i*100+50,y:40+Math.random()*80,w:60+Math.random()*60,speed:0.3+Math.random()*0.3})); }
+function makeLava(){ lavaBubbles=Array.from({length:14},()=>({x:Math.random()*400,y:490+Math.random()*30,r:4+Math.random()*10,t:Math.random()*Math.PI*2})); }
+
+function getCurBird(){ return BIRD_TYPES.find(b=>b.id===selectedBirdId)||BIRD_TYPES[0]; }
+
+function initGame(){
+  birdPhys={x:BIRD_X,y:240,vy:0,angle:0,flap:0};
+  pipes=[]; score=0; frameCount=0; particles=[];
+  scoreEl.textContent=0;
+  theme=THEMES[0]; applyTheme(theme);
+  makeStars(); makeClouds(); makeLava();
+  gameRunning=false; gameOver=false;
+  updateIconSb();
+}
+
+function updateIconSb(){ birdIconSb.textContent=getCurBird().emoji; }
+
+function applyTheme(t){
+  document.documentElement.style.setProperty('--accent',t.accent);
+  scoreboard.style.borderColor=t.accent;
+  canvas.style.borderColor=t.accent;
+  document.getElementById('credits').style.borderColor=t.accent;
+  themeNameEl.textContent=t.name;
+  if(t.stars) makeStars();
+  if(t.lava) makeLava();
+}
+
+function showThemeToast(t){
+  themeLabelEl.textContent=t.label;
+  themeLabelEl.classList.add('show');
+  setTimeout(()=>themeLabelEl.classList.remove('show'),2200);
+}
+
+function showUnlockToast(bt){
+  unlockToast.innerHTML=`🎉 BIRD UNLOCKED!<br>${bt.emoji} ${bt.name}`;
+  unlockToast.classList.add('show');
+  setTimeout(()=>unlockToast.classList.remove('show'),3000);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BIRD SELECT SCREEN
+// ═══════════════════════════════════════════════════════════════════
+function openBirdSelect(){
+  showingBirdSelect=true;
+  birdSelectScreen.classList.remove('hidden');
+  overlay.classList.add('hidden');
+  renderBirdGrid();
+}
+function closeBirdSelect(){
+  showingBirdSelect=false;
+  birdSelectScreen.classList.add('hidden');
+}
+
+function renderBirdGrid(){
+  birdsGrid.innerHTML='';
+  BIRD_TYPES.forEach(bt=>{
+    const isUL=unlockedBirds.has(bt.id), isSel=bt.id===selectedBirdId;
+    const card=document.createElement('div');
+    card.className=`bird-card ${isUL?'unlocked':'locked'} ${isSel?'selected':''}`;
+
+    // mini preview
+    const mc=document.createElement('canvas');
+    mc.width=76; mc.height=60;
+    const mctx=mc.getContext('2d');
+    mctx.translate(38,30);
+    const previewHL = isUL ? bt.baseColors||{body:'#FFD700',wing:'#FFA500',eye:'#000',beak:'#FF8C00',glow:'#FFD700'} : {body:'#555',wing:'#444',eye:'#777',beak:'#666',glow:'#555'};
+    bt.draw(mctx,0,0,previewHL);
+    card.appendChild(mc);
+
+    const nm=document.createElement('div'); nm.className='bname'; nm.textContent=bt.name; card.appendChild(nm);
+
+    if(!isUL){
+      const req=document.createElement('div'); req.className='breq'; req.textContent=`SCORE ${bt.unlockScore}`; card.appendChild(req);
+      const li=document.createElement('div'); li.className='licon'; li.textContent='🔒'; card.appendChild(li);
+    } else if(isSel){
+      const sb=document.createElement('div'); sb.className='sbadge'; sb.textContent='✓ON'; card.appendChild(sb);
+    }
+
+    if(isUL){
+      card.addEventListener('click',()=>{
+        selectedBirdId=bt.id;
+        localStorage.setItem('flappySelectedBird',bt.id);
+        updateIconSb();
+        renderBirdGrid();
+      });
+    }
+    birdsGrid.appendChild(card);
+  });
+}
+
+// base colors for preview (override per bird)
+BIRD_TYPES[0].baseColors={body:'#FFD700',wing:'#FFA500',eye:'#000',beak:'#FF8C00',glow:'#FFD700'};
+BIRD_TYPES[1].baseColors={body:'#8B4513',wing:'#5c2e0a',eye:'#FF8C00',beak:'#FFD700',glow:'#CD853F'};
+BIRD_TYPES[2].baseColors={body:'#1e1b4b',wing:'#4338ca',eye:'#fff',beak:'#fbbf24',glow:'#818cf8'};
+BIRD_TYPES[3].baseColors={body:'#7f1d1d',wing:'#991b1b',eye:'#ff4444',beak:'#f97316',glow:'#ef4444'};
+BIRD_TYPES[4].baseColors={body:'#e0f2fe',wing:'#7dd3fc',eye:'#0ea5e9',beak:'#fff',glow:'#38bdf8'};
+BIRD_TYPES[5].baseColors={body:'#1e1b4b',wing:'#4338ca',eye:'#fff',beak:'#c4b5fd',glow:'#818cf8'};
+
+closeSelectBtn.addEventListener('click',()=>{
+  closeBirdSelect();
+  initGame();
+  overlay.classList.add('hidden');
+  gameRunning=true;
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// GAME LOOP
+// ═══════════════════════════════════════════════════════════════════
+function jump(){
+  if(showingBirdSelect) return;
+  if(gameOver){ openBirdSelect(); return; }
+  if(!gameRunning){ gameRunning=true; overlay.classList.add('hidden'); }
+  birdPhys.vy=JUMP; birdPhys.angle=-25;
+  spawnParts(birdPhys.x+15,birdPhys.y,theme.accent,5);
+}
+
+function spawnParts(x,y,color,n){
+  for(let i=0;i<n;i++) particles.push({x,y,vx:(Math.random()-0.5)*4,vy:(Math.random()-0.5)*4,life:1,color});
+}
+
+function addPipe(){
+  const topH=80+Math.random()*(canvas.height-140-PIPE_GAP);
+  pipes.push({x:canvas.width,topH,scored:false});
+}
+
+function checkUnlocks(sc){
+  BIRD_TYPES.forEach(bt=>{
+    if(bt.unlockScore>0 && sc>=bt.unlockScore && !unlockedBirds.has(bt.id)){
+      unlockedBirds.add(bt.id);
+      localStorage.setItem('flappyUnlocked',[...unlockedBirds].join(','));
+      showUnlockToast(bt);
+    }
+  });
+}
+
+function update(){
+  if(!gameRunning) return;
+  frameCount++;
+  birdPhys.flap+=0.3;
+  birdPhys.vy+=GRAVITY;
+  birdPhys.y+=birdPhys.vy;
+  birdPhys.angle=Math.min(birdPhys.vy*4,80);
+  if(frameCount%90===0) addPipe();
+
+  lavaBubbles.forEach(b=>{ b.t+=0.04; b.y=(canvas.height-30)+Math.sin(b.t)*8; });
+
+  pipes.forEach(p=>{
+    p.x-=PIPE_SPD;
+    if(!p.scored && p.x+PIPE_W<BIRD_X){
+      p.scored=true; score++; scoreEl.textContent=score;
+      spawnParts(BIRD_X,birdPhys.y,theme.accent,10);
+      checkUnlocks(score);
+      if(score%10===0){
+        const idx=Math.floor(score/10)%THEMES.length;
+        theme=THEMES[idx]; applyTheme(theme); showThemeToast(theme);
+      }
+      if(score>best){ best=score; bestEl.textContent=best; localStorage.setItem('flappyBest',best); }
+    }
+  });
+  pipes=pipes.filter(p=>p.x>-PIPE_W-10);
+  particles.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.life-=0.05; });
+  particles=particles.filter(p=>p.life>0);
+
+  // Collision - use bird hit size
+  const bt=getCurBird();
+  const hw=Math.floor(bt.hitW/2), hh=Math.floor(bt.hitH/2);
+  const bx=birdPhys.x+hw*0.2, by=birdPhys.y+hh*0.2, bw=hw*1.4, bh=hh*1.4;
+  if(birdPhys.y>canvas.height-58-hh||birdPhys.y<0) endGame();
+  pipes.forEach(p=>{
+    if(bx+bw>p.x+5 && bx<p.x+PIPE_W-5){
+      if(by<p.topH||by+bh>p.topH+PIPE_GAP) endGame();
+    }
+  });
+}
+
+function endGame(){
+  if(gameOver) return;
+  gameRunning=false; gameOver=true;
+  spawnParts(birdPhys.x,birdPhys.y,'#ff4444',20);
+  overlay.innerHTML=`
+    <h1>GAME<br>OVER</h1>
+    <p>SCORE: ${score} &nbsp;|&nbsp; BEST: ${best}<br><br>
+    🔓 Birds: ${unlockedBirds.size} / ${BIRD_TYPES.length}<br><br>
+    CLICK to SELECT BIRD & RETRY</p>`;
+  overlay.classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DRAW
+// ═══════════════════════════════════════════════════════════════════
+function drawSky(){
+  const g=ctx.createLinearGradient(0,0,0,canvas.height-58);
+  g.addColorStop(0,theme.sky[0]); g.addColorStop(1,theme.sky[1]);
+  ctx.fillStyle=g; ctx.fillRect(0,0,canvas.width,canvas.height-58);
+}
+function drawStars(){
+  if(!theme.stars) return;
+  stars.forEach(s=>{
+    s.a+=0.01; ctx.globalAlpha=0.4+0.6*Math.abs(Math.sin(s.a));
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+function drawClouds(){
+  if(!theme.clouds) return;
+  clouds.forEach(c=>{
+    if(gameRunning) c.x-=c.speed;
+    if(c.x<-c.w) c.x=canvas.width+c.w;
+    ctx.fillStyle='rgba(255,255,255,0.65)';
+    ctx.beginPath();
+    ctx.ellipse(c.x,c.y,c.w/2,18,0,0,Math.PI*2);
+    ctx.ellipse(c.x-20,c.y+5,c.w/3,14,0,0,Math.PI*2);
+    ctx.ellipse(c.x+20,c.y+5,c.w/3,14,0,0,Math.PI*2);
+    ctx.fill();
+  });
+}
+function drawLava(){
+  if(!theme.lava) return;
+  lavaBubbles.forEach(b=>{
+    const g=ctx.createRadialGradient(b.x,b.y,1,b.x,b.y,b.r);
+    g.addColorStop(0,'#fff8'); g.addColorStop(0.5,'#f9731688'); g.addColorStop(1,'#7f1d1d00');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+  });
+}
+function drawGround(){
+  ctx.fillStyle=theme.ground; ctx.fillRect(0,canvas.height-58,canvas.width,58);
+  ctx.fillStyle=theme.grass; ctx.fillRect(0,canvas.height-58,canvas.width,16);
+  ctx.fillStyle=theme.ground;
+  for(let x=0;x<canvas.width;x+=20) ctx.fillRect(x+frameCount%20-10,canvas.height-58,8,8);
+}
+function drawPipe(p){
+  ctx.shadowColor=theme.accent; ctx.shadowBlur=10;
+  ctx.fillStyle=theme.pipe; ctx.fillRect(p.x,0,PIPE_W,p.topH);
+  ctx.fillStyle=theme.pipeBorder; ctx.fillRect(p.x-5,p.topH-22,PIPE_W+10,22);
+  ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fillRect(p.x+6,0,10,p.topH);
+  const by=p.topH+PIPE_GAP;
+  ctx.fillStyle=theme.pipe; ctx.fillRect(p.x,by,PIPE_W,canvas.height-by-58);
+  ctx.fillStyle=theme.pipeBorder; ctx.fillRect(p.x-5,by,PIPE_W+10,22);
+  ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.fillRect(p.x+6,by+22,10,canvas.height-by-80);
+  ctx.shadowBlur=0;
+}
+function drawBird(){
+  const bt=getCurBird();
+  ctx.save();
+  ctx.translate(birdPhys.x+bt.hitW/2, birdPhys.y+bt.hitH/2);
+  bt.draw(ctx, birdPhys.flap, birdPhys.angle, theme.birdHL);
+  ctx.restore();
+}
+function drawParticles(){
+  particles.forEach(p=>{
+    ctx.globalAlpha=p.life; ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,3*p.life,0,Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+function drawInGameScore(){
+  ctx.fillStyle='#fff'; ctx.font='24px "Press Start 2P"';
+  ctx.textAlign='center'; ctx.shadowColor='#000'; ctx.shadowBlur=6;
+  ctx.fillText(score,canvas.width/2,40); ctx.shadowBlur=0;
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawSky(); drawStars(); drawClouds(); drawLava();
+  pipes.forEach(drawPipe);
+  drawGround(); drawBird(); drawParticles();
+  if(gameRunning) drawInGameScore();
+}
+
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
+
+// ═══════════════════════════════════════════════════════════════════
+// INPUT
+// ═══════════════════════════════════════════════════════════════════
+canvas.addEventListener('click', jump);
+birdIconSb.addEventListener('click', e=>{ e.stopPropagation(); openBirdSelect(); });
+document.addEventListener('keydown', e=>{
+  if(e.code==='Space'){ e.preventDefault(); jump(); }
+  if(e.code==='KeyB') openBirdSelect();
+});
+
+initGame();
+loop();
+</script>
+</body>
+</html>
